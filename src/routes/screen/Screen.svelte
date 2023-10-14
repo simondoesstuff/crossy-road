@@ -1,32 +1,24 @@
 <script lang="ts">
-    import {main} from "$lib/webGL/init";
+    import * as glManager from "$lib/webGL/gl";
     import {onMount} from "svelte";
 
-    let canvas;
-    let clientWidth, clientHeight;
-    let gl;
-
-    function canvasResize() {
-        clientWidth = canvas?.clientWidth;
-        clientHeight = canvas?.clientHeight;
-        gl?.viewport(0, 0, clientWidth, clientHeight)
-    }
+    let canvas: HTMLCanvasElement;
 
     onMount(() => {
-        gl = main(canvas);
-        canvasResize();
+        try {
+            glManager.init(canvas);
+            glManager.checkCanvasSize();
+        } catch (e: any) {
+            if (typeof e === "string") {
+                alert("Error: " + e);
+            } else throw e;
+        }
     });
 </script>
 
-<svelte:window on:resize={canvasResize}/>
+<svelte:window on:resize={glManager.checkCanvasSize}/>
 
 <!-- WebGL Canvas -->
-<canvas id="screen"
-        class="w-full h-full"
-        bind:this={canvas}
-        bind:clientWidth
-        bind:clientHeight
-        width={clientWidth}
-        height={clientHeight}
-    >
+<canvas id="screen" class="w-full h-full"
+        bind:this={canvas}>
 </canvas>

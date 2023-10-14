@@ -25,6 +25,10 @@
 	},
 	"type": "module",
 	"dependencies": {
+		"@loaders.gl/core": "^3.4.14",
+		"@loaders.gl/gltf": "^3.4.14",
+		"@loaders.gl/obj": "^3.4.14",
+		"@loaders.gl/ply": "^3.4.14",
 		"gl-matrix": "^3.4.3"
 	}
 }
