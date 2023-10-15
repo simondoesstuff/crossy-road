@@ -1,5 +1,6 @@
 <script lang="ts">
-    import * as glManager from "$lib/webGL/gl";
+    import * as glManager from "$lib/webGL/glManager";
+    import * as scene from "$lib/webGL/scene";
     import {onMount} from "svelte";
 
     let canvas: HTMLCanvasElement;
@@ -7,7 +8,8 @@
     onMount(() => {
         try {
             glManager.init(canvas);
-            glManager.checkCanvasSize();
+            scene.init();
+
             glManager.startRendering();
         } catch (e: any) {
             if (typeof e === "string") {

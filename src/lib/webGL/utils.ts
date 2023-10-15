@@ -18,15 +18,6 @@ export async function importFile(path: string) {
     return (await import(path + '?raw')).default;
 }
 
-async function wrapInResponse(data: string, type: string) {
-    const blob = new Blob([data], { type });
-    return new Response(blob);
-}
-
-export async function importFileAsResponse(path: string) {
-    return wrapInResponse(await importFile(path), null!);
-}
-
 export function magnitude(v: number[]) {
     let len = 0;
     for (let i = 0; i < v.length; i++) {
@@ -43,3 +34,4 @@ export function normalize(v: number[]) {
     }
     return v;
 }
+

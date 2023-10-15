@@ -1,4 +1,4 @@
-import {gl} from "./gl";
+import {gl} from "./glManager";
 import {importFile} from "$lib/webGL/utils";
 
 let shaders: Map<string, Shader>;
