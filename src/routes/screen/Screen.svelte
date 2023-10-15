@@ -22,6 +22,6 @@
 <svelte:window on:resize={glManager.checkCanvasSize}/>
 
 <!-- WebGL Canvas -->
-<canvas id="screen" class="w-full h-full"
+<canvas id="screen" class="w-screen h-screen"
         bind:this={canvas}>
 </canvas>
