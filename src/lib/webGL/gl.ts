@@ -39,9 +39,9 @@ export async function init(canvas: HTMLCanvasElement) {
     mat4.perspective(projMatrix, fov, gl.canvas.width / gl.canvas.height, 0.1, far);
     gl.uniformMatrix4fv(shader.uniform.projectionMatrix, false, projMatrix);
 
-    gl.uniform4fv(shader.uniform.directionalLightDir, normalize([1.0, 3.0, 2.0, 0.0]));
-    gl.uniform4fv(shader.uniform.directionalLightColor, normalize([0.0, 1.0, 3.0, 1.0]));
-    gl.uniform4fv(shader.uniform.ambientLightColor, normalize([.3,.3,.3,1]));
+    gl.uniform4fv(shader.uniform.directionalLightDir, [2.0, 1.0, 0.7, 0]);
+    gl.uniform4fv(shader.uniform.directionalLightColor, [0, 0.2, 0.2, 1]);
+    gl.uniform4fv(shader.uniform.ambientLightColor, [.7, .7, .7, 1]);
 
     // load models
 
@@ -126,12 +126,12 @@ export async function init(canvas: HTMLCanvasElement) {
         let modelViewMatrix = mat4.create();
         mat4.translate(modelViewMatrix, modelViewMatrix, [0.0, -.1 * far, -.7 * far]);
 
-        mat4.translate(modelViewMatrix, modelViewMatrix, [0.0, Math.sin(rotation * .5) * 20 + 10, 0.0]);
-        mat4.translate(modelViewMatrix, modelViewMatrix, [0.0, Math.sin(rotation * 1.8) * 2, 0.0]);
-        mat4.translate(modelViewMatrix, modelViewMatrix, [0.0, 0.0, Math.sin(rotation * 2.2) * 5]);
+        mat4.translate(modelViewMatrix, modelViewMatrix, [0.0, Math.sin(rotation * .5) * 25 + 10, 0.0]);
+        mat4.translate(modelViewMatrix, modelViewMatrix, [0.0, 0.0, Math.sin(rotation * 2.23) * 5]);
 
         mat4.rotate(modelViewMatrix, modelViewMatrix, rotation, [0, 1, 0]);
-        mat4.rotate(modelViewMatrix, modelViewMatrix, Math.sin(rotation * 2.4) / 4, [1, 0, 0]);
+        mat4.rotate(modelViewMatrix, modelViewMatrix, Math.sin(rotation * 2.87) * .2, [1, 0, 1]);
+        mat4.translate(modelViewMatrix, modelViewMatrix, [11, 0, 0]);
 
         let normalMatrix = mat4.clone(modelViewMatrix);
         mat4.invert(normalMatrix, normalMatrix);
