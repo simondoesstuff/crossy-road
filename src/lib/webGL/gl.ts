@@ -43,6 +43,10 @@ export async function init(canvas: HTMLCanvasElement) {
     gl.uniform4fv(shader.uniform.directionalLightColor, [0, 0.2, 0.2, 1]);
     gl.uniform4fv(shader.uniform.ambientLightColor, [.7, .7, .7, 1]);
 
+    gl.useProgram(shaders.get('default')!.program);
+    gl.uniformMatrix4fv(shaders.get('default')!.uniform.projectionMatrix, false, projMatrix);
+    gl.useProgram(shader.program);
+
     // load models
 
     const obj = await load('./models/crossChicken.ply', PLYLoader);
@@ -117,9 +121,26 @@ export async function init(canvas: HTMLCanvasElement) {
     gl.cullFace(gl.BACK); // Cull back faces
     gl.uniformMatrix4fv(shader.uniform.projectionMatrix, false, projMatrix);
 
+    let canChange = true;
+
     events.render.add((dt) => {
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
         rotation += dt / 1000;
+
+        if (Math.abs(Math.sin(rotation * 2)) < .01 && canChange) {
+            if (shader == shaders.get('default')) {
+                shader = shaders.get('crossy') as CrossyShader;
+                gl.useProgram(shader.program);
+                gl.clearColor(0, 0.5, 0.9, 1.0); // Clear to black, fully opaque
+            } else {
+                shader = shaders.get('default')!;
+                gl.useProgram(shader.program);
+                gl.clearColor(0, 0, 0.1, 1); // Clear to black, fully opaque
+            }
+            canChange = false;
+        } else {
+            canChange = true;
+        }
 
         // model view matrix
 
