@@ -1,5 +1,7 @@
-import { gl } from "./gl";
+import {gl} from "./gl";
 import {importFile} from "$lib/webGL/utils";
+
+let shaders: Map<string, Shader>;
 
 export interface Shader {
     name: string;
@@ -15,8 +17,33 @@ export interface Shader {
     }
 }
 
+export interface CrossyShader extends Shader {
+    uniform: {
+        projectionMatrix: WebGLUniformLocation;
+        modelViewMatrix: WebGLUniformLocation;
+        normalMatrix: WebGLUniformLocation;
+        directionalLightDir: WebGLUniformLocation;
+        directionalLightColor: WebGLUniformLocation;
+        ambientLightColor: WebGLUniformLocation;
+    }
+}
+
+export async function initShaders(): Promise<Map<string, Shader>> {
+    let shaders = new Map<string, Shader>();
+    shaders.set('default', await compileShader('default'));
+
+    const crossy = await compileShader('crossy') as CrossyShader;
+    crossy.uniform.directionalLightDir = gl.getUniformLocation(crossy.program, 'u_directionalLightDir')!;
+    crossy.uniform.directionalLightColor = gl.getUniformLocation(crossy.program, 'u_directionalLightColor')!;
+    crossy.uniform.ambientLightColor = gl.getUniformLocation(crossy.program, 'u_ambientLightColor')!;
+    crossy.uniform.normalMatrix = gl.getUniformLocation(crossy.program, 'u_normalMatrix')!;
+    shaders.set('crossy', crossy);
+
+    return shaders;
+}
+
 // loads a shader from file and compiles it
-export async function compileShader(prefix: string): Promise<Shader> {
+async function compileShader(prefix: string): Promise<Shader> {
     const vertPath = `./shaders/${prefix}.vert`;
     const fragPath = `./shaders/${prefix}.frag`;
 

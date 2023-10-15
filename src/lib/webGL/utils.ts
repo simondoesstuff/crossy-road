@@ -26,3 +26,20 @@ async function wrapInResponse(data: string, type: string) {
 export async function importFileAsResponse(path: string) {
     return wrapInResponse(await importFile(path), null!);
 }
+
+export function magnitude(v: number[]) {
+    let len = 0;
+    for (let i = 0; i < v.length; i++) {
+        len += v[i] * v[i];
+    }
+    return Math.sqrt(len);
+}
+
+export function normalize(v: number[]) {
+    const len = magnitude(v);
+    if (len === 0) return v;
+    for (let i = 0; i < v.length; i++) {
+        v[i] /= len;
+    }
+    return v;
+}

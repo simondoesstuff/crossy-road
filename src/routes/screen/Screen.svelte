@@ -8,6 +8,7 @@
         try {
             glManager.init(canvas);
             glManager.checkCanvasSize();
+            glManager.startRendering();
         } catch (e: any) {
             if (typeof e === "string") {
                 alert("Error: " + e);
