@@ -1,21 +1,24 @@
 <script lang="ts">
     import * as glManager from "$lib/webGL/glManager";
-    import * as scene from "$lib/webGL/scene";
+    import * as floatScene from "$lib/webGL/scene/floatingObject";
+    import * as crossyScene from "$lib/webGL/scene/crossyRoad";
     import {onMount} from "svelte";
 
     let canvas: HTMLCanvasElement;
 
-    onMount(() => {
-        try {
-            glManager.init(canvas);
-            scene.init();
+    onMount(async () => {
+        // todo revert try catch
+        // try {
+            await glManager.init(canvas);
+            // await floatScene.init();
+            await crossyScene.init();
 
             glManager.startRendering();
-        } catch (e: any) {
-            if (typeof e === "string") {
-                alert("Error: " + e);
-            } else throw e;
-        }
+        // } catch (e: any) {
+        //     if (typeof e === "string") {
+        //         alert("Error: " + e);
+        //     } else throw e;
+        // }
     });
 </script>
 

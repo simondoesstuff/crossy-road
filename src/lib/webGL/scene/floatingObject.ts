@@ -1,4 +1,4 @@
-import {events, gl, shader, updateModelViewMatrix} from "$lib/webGL/glManager";
+import {events, gl, shader, updateModelViewMatrix, updateNormalMatrix} from "$lib/webGL/glManager";
 import {Object3D} from "$lib/webGL/resources";
 import {mat4} from "gl-matrix";
 
@@ -8,7 +8,7 @@ export async function init() {
     // load models
     const obj = await Object3D.fromPath('./resourcePacks/basic/player.ply');
 
-    gl.clearColor(0, 0, 0.1, 1.0); // Clear to black, fully opaque
+    gl.clearColor(0, 0, 0.1, 1.0);
     gl.uniform4fv(shader.uniform.directionalLightDir, [2.0, 1.0, 0.7, 0]);
     gl.uniform4fv(shader.uniform.directionalLightColor, [0, 0.2, 0.2, 1]);
     gl.uniform4fv(shader.uniform.ambientLightColor, [.7, .7, .7, 1]);
@@ -30,6 +30,8 @@ export async function init() {
         mat4.translate(modelViewMatrix, modelViewMatrix, [11, 0, 0]);
 
         updateModelViewMatrix(modelViewMatrix);
+        updateNormalMatrix();
+
         obj.draw();
     });
 }

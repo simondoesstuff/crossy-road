@@ -36,7 +36,7 @@ export async function init(canvas: HTMLCanvasElement) {
     events.resize.add((w, h) => {
         let projMatrix = mat4.create();
         const fov = 50 * Math.PI / 180;
-        const far = 400; // todo arbitrary
+        const far = null!; // todo make far frustum dist finite?
         mat4.perspective(projMatrix, fov, gl.canvas.width / gl.canvas.height, 0.1, far);
         gl.uniformMatrix4fv(shader.uniform.projectionMatrix, false, projMatrix);
     });
@@ -55,17 +55,18 @@ export async function init(canvas: HTMLCanvasElement) {
     checkCanvasSize();
 }
 
-export function updateModelViewMatrix(updater: mat4 | ((matrix: mat4) => mat4)) {
+/// Will NOT automatically update the normal matrix
+export function updateModelViewMatrix(updater: mat4 | ((matrix: mat4) => void)) {
     if (updater instanceof Function) {
-        modelViewMatrix = updater(modelViewMatrix);
+        updater(modelViewMatrix);
     } else {
         modelViewMatrix = updater;
     }
 
     gl.uniformMatrix4fv(shader.uniform.modelViewMatrix, false, modelViewMatrix);
+}
 
-    // build normal matrix
-
+export function updateNormalMatrix() {
     let normalMatrix = mat4.clone(modelViewMatrix);
     mat4.invert(normalMatrix, normalMatrix);
     mat4.transpose(normalMatrix, normalMatrix);
