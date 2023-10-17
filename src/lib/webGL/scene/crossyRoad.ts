@@ -3,12 +3,14 @@ import {events, gl, modelViewMatrix, shader, updateModelViewMatrix, updateNormal
 import {mat4} from "gl-matrix";
 
 const roadLength = 20;
-const tileWidth = 17.9;
+const tileWidth = 20;
 
 let safeTile: Object3D;
 let safeTileAlt: Object3D;
 let roadTile: Object3D;
 let roadTileStripe: Object3D;
+let roadTileCap: Object3D;
+let roadTileCap2: Object3D;
 
 let boulevards = [
     {
@@ -38,6 +40,10 @@ let boulevards = [
     {
         type: 'safe',
         width: 1
+    },
+    {
+        type: 'safe',
+        width: 1
     }
 ];
 
@@ -50,54 +56,32 @@ interface Tile {
 let tiles: Tile[][];
 
 export async function init() {
-    safeTile = await Object3D.fromPath('./resourcePacks/basic/safeTile.ply');
-    safeTileAlt = await Object3D.fromPath('./resourcePacks/basic/safeTileAlt.ply');
-    roadTile = await Object3D.fromPath('./resourcePacks/basic/roadTile.ply');
-    roadTileStripe = await Object3D.fromPath('./resourcePacks/basic/roadTileStripe.ply');
+    safeTile = await Object3D.fromPath('./resourcePacks/basic/safe.ply');
+    safeTileAlt = await Object3D.fromPath('./resourcePacks/basic/safe2.ply');
+    roadTile = await Object3D.fromPath('./resourcePacks/basic/road.ply');
+    roadTileStripe = await Object3D.fromPath('./resourcePacks/basic/roadStripe.ply');
+    roadTileCap = await Object3D.fromPath('./resourcePacks/basic/roadCap.ply');
+    roadTileCap2 = await Object3D.fromPath('./resourcePacks/basic/roadCap2.ply');
 
     tiles = [];
     for (let i = 0; i < boulevards.length; i++) {
         const boulevard = boulevards[i];
         switch (boulevard.type) {
             case 'safe':
-                if (boulevard.width == 1) {
-                    tiles.push([{
-                        type: safeTile,
-                    }]);
-                } else {
-                    for (let j = 0; j < boulevard.width; j++) {
-                        let type = ((i + j) % 2 == 0) ? safeTile : safeTileAlt;
-                        tiles.push([{
-                            type,
-                        }]);
-                    }
+                for (let j = 0; j < boulevard.width; j++) {
+                    let type = ((i + j) % 2 == 0) ? safeTile : safeTileAlt;
+                    tiles.push([{ type }]);
                 }
                 break;
             case 'road':
                 if (boulevard.width == 1) {
-                    let lane = [];
-                    for (let j = 0; j < roadLength; j++) {
-                        lane.push({
-                            type: roadTile,
-                            x: j
-                        });
-                    }
-                    tiles.push(lane);
+                    tiles.push([{ type: roadTile }]);
                 } else {
-                    let orientation = Math.PI;
-                    for (let j = 0; j < boulevard.width; j++) {
-                        let lane = [];
-                        orientation = Math.PI - orientation;
-                        for (let k = 0; k < roadLength; k++) {
-                            let type = (k % 2 == 0) ? roadTile : roadTileStripe;
-                            lane.push({
-                                type,
-                                x: k,
-                                orientation,
-                            });
-                        }
-                        tiles.push(lane);
+                    tiles.push([{ type: roadTileCap2 }]);
+                    for (let j = 0; j < boulevard.width - 2; j++) {
+                        tiles.push([{ type: roadTileStripe }]);
                     }
+                    tiles.push([{ type: roadTileCap }]);
                 }
                 break;
         }
@@ -105,8 +89,8 @@ export async function init() {
 
     gl.clearColor(0, 0, 0.1, 1.0);
     gl.uniform4fv(shader.uniform.directionalLightDir, [2.0, 1.0, 0.7, 0]);
-    gl.uniform4fv(shader.uniform.directionalLightColor, [0, 0.2, 0.2, 1]);
-    gl.uniform4fv(shader.uniform.ambientLightColor, [.7, .7, .7, 1]);
+    gl.uniform4fv(shader.uniform.directionalLightColor, [0.5, 0.5, 0.5, 1]);
+    gl.uniform4fv(shader.uniform.ambientLightColor, [.5, .5, .5, 1]);
 
     // updateModelViewMatrix((matrix) => {
     //     mat4.translate(matrix, matrix, [0, 0, -200]);
@@ -118,7 +102,7 @@ export async function init() {
         rotation += dt / 1000;
 
         const rootMatrix = mat4.create();
-        mat4.translate(rootMatrix, rootMatrix, [-150, -30, -400]);
+        mat4.translate(rootMatrix, rootMatrix, [200, -80, -150]);
         mat4.rotateX(rootMatrix, rootMatrix, Math.PI / 6);
         mat4.rotateY(rootMatrix, rootMatrix, Math.sin(rotation) * .2);
         mat4.translate(rootMatrix, rootMatrix, [0, 0, -80]);
@@ -126,17 +110,15 @@ export async function init() {
         for (let i = 0; i < tiles.length; i++) {
             const lane = tiles[i];
             const laneMatrix = mat4.create();
-            mat4.translate(laneMatrix, rootMatrix, [0, 0, i * tileWidth]);
+            mat4.translate(laneMatrix, rootMatrix, [0, 0, -i * tileWidth]);
 
             for (const tile of lane) {
                 const tileMatrix = mat4.clone(laneMatrix);
                 mat4.translate(tileMatrix, laneMatrix, [tileWidth * (tile.x ?? 0), 0, 0]);
-                mat4.rotate(tileMatrix, tileMatrix, tile.orientation ?? 0, [0, 1, 0]);
-                mat4.translate(tileMatrix, tileMatrix, [tileWidth / 2, 0, -tileWidth / 2]);
+                mat4.rotate(tileMatrix, tileMatrix, Math.PI/2 * (tile.orientation ?? 0), [0, 1, 0]);
 
                 if (tile.type == safeTile || tile.type == safeTileAlt) {
-                    mat4.translate(tileMatrix, tileMatrix, [(roadLength - 1) * tileWidth, 0, 0]);
-                    mat4.scale(tileMatrix, tileMatrix, [roadLength, 1.2, 1]);
+                    mat4.scale(tileMatrix, tileMatrix, [1, 3, 1]);
                 }
 
                 updateModelViewMatrix(tileMatrix);
