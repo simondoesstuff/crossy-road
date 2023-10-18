@@ -3,7 +3,8 @@ import {events, gl, modelViewMatrix, shader, updateModelViewMatrix, updateNormal
 import {mat4} from "gl-matrix";
 
 const tileWidth = 20;
-const obstacleYShift = 0.14;
+const safeHeight = .14;
+const roadHeight = .024;
 
 let safe: Object3D;
 let safe2: Object3D;
@@ -14,9 +15,11 @@ let roadCap2: Object3D;
 let treeBase: Object3D;
 let treeTop: Object3D;
 let rock: Object3D;
+let track: Object3D;
+let trackPost: Object3D;
 
 interface Tile {
-    type: 'safe' | 'road' | 'obstacle',
+    type: 'safe' | 'road' | 'obstacle' | 'train',
     obj: Object3D,
     x?: number,
     y?: number,
@@ -35,6 +38,9 @@ export async function init() {
     roadStripe = await Object3D.fromPath('./resourcePacks/basic/roadStripe.ply');
     roadCap = await Object3D.fromPath('./resourcePacks/basic/roadCap.ply');
     roadCap2 = await Object3D.fromPath('./resourcePacks/basic/roadCap2.ply');
+
+    track = await Object3D.fromPath('./resourcePacks/basic/track.ply');
+    trackPost = await Object3D.fromPath('./resourcePacks/basic/trackPost.ply');
 
     treeBase = await Object3D.fromPath('./resourcePacks/basic/treeBase.ply');
     treeTop = await Object3D.fromPath('./resourcePacks/basic/treeTop.ply');
@@ -61,10 +67,12 @@ export async function init() {
     addTree(14, 6, 2);
     addTree(7, 5, 4);
 
-    addRock(1, 4);
-    addRock(5, 5);
-    addRock(11, 0);
-    addRock(14, 9);
+    addObstacle(1, 4);
+    addObstacle(5, 5);
+    addObstacle(11, 0);
+    addObstacle(14, 9);
+
+    addTrain(3);
     bakeLanesToTiles();
 
     let rotation = 0
@@ -124,19 +132,25 @@ export function addBoulevard(type: 'safe' | 'road', width: number) {
     }
 }
 
-export function addRock(x: number, z: number, orientation?: number, variant?: number) {
+export function addTrain(z: number) {
+    const shift = lanes[z][0].type == 'safe' ? safeHeight : roadHeight;
+    lanes[z].push({ type: 'train', obj: track, x: 19, y: shift });
+    lanes[z].push({ type: 'train', obj: trackPost, x: 5, y: shift });
+}
+
+export function addObstacle(x: number, z: number, orientation?: number, variant?: number) {
     orientation ??= Math.floor(Math.random() * 4);
     // todo rock variants
-    lanes[z].push({ type: 'obstacle', obj: rock, x, y: obstacleYShift, orientation });
+    lanes[z].push({ type: 'obstacle', obj: rock, x, y: safeHeight, orientation });
 }
 
 export function addTree(x: number, z: number, height: number) {
     let tree = [
-        { type: 'obstacle', obj: treeBase, x, y: obstacleYShift } as Tile,
+        { type: 'obstacle', obj: treeBase, x, y: safeHeight } as Tile,
     ];
 
     for (let i = 0; i < height; i++) {
-        tree.push({ type: 'obstacle', obj: treeTop, x, y: .4 * i + obstacleYShift });
+        tree.push({ type: 'obstacle', obj: treeTop, x, y: .4 * i + safeHeight });
     }
 
     // ordering in the lane is not important
