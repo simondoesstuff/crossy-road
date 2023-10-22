@@ -93,7 +93,7 @@ export async function init() {
             const y = (player.drawPos.y + tileHeight(tileZ)) * tileWidth;
 
             mat4.translate(playerMatrix, playerMatrix, [x, y, z]);
-            mat4.rotateY(playerMatrix, playerMatrix, Math.PI/2 * player.orientation);
+            mat4.rotateY(playerMatrix, playerMatrix, Math.PI/2 * player.orient);
             const fatStretch = (4 - player.stretch) / 3;
             mat4.scale(playerMatrix, playerMatrix, [fatStretch, player.stretch, fatStretch]);
 

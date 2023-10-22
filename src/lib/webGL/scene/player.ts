@@ -8,16 +8,18 @@ const jumpDuration = .18;
 const jumpVelocity = 1.27 / jumpDuration;
 const stretchRange = .2;
 const stretchSpeed = 3.864 / jumpDuration;
+const spinSpeed = 2.5 / jumpDuration;
 
 const gravity = 2 * jumpVelocity / jumpDuration;
 const dxdt = 1 / jumpDuration;
 
-let targetPos = { x: 7, z: 1, y: 0 };
 let t = 0;
+let targetPos = { x: 7, z: 1, y: 0 };
 let stretchTargets: number[] = [];
+let targetOrient = 0;
 
 export let drawPos = { x: 7, z: 1, y: 0 }; // todo revert
-export let orientation = 0;
+export let orient = 0;
 export let stretch = 1;
 
 
@@ -28,7 +30,7 @@ export function init() {
         t = -jumpDuration;
         targetPos.x += dir[0];
         targetPos.z += dir[1];
-        orientation = newOrient;
+        targetOrient = newOrient;
         stretchTargets = [1 + stretchRange,  1];
     };
 
@@ -57,6 +59,17 @@ export function update(dt: number) {
         } else {
             stretch = lerp(stretch, stretchTargets[0], stretchSpeed * dt);
         }
+    }
+
+    if (orient != targetOrient) {
+        if (Math.abs(orient - targetOrient) >= 2) {
+            if (orient < targetOrient) {
+                orient += 4;
+            } else {
+                orient -= 4;
+            }
+        }
+        orient = lerp(orient, targetOrient, spinSpeed * dt);
     }
 
     if (t == 0) return;
