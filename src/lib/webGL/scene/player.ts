@@ -4,16 +4,19 @@ import * as input from "../input";
 // y' = -at + v // delta y depends on t_total
 // v_initial = -1/2 a (jump_duration)
 
-const jumpDuration = .135;
-const jumpVelocity = 7;
-const stretchiness = .5;
+const jumpDuration = .138;
+const jumpVelocity = 9;
+const stretchRange = .2;
+const stretchSpeed = 28;
 
 const gravity = 2 * jumpVelocity / jumpDuration;
 const dxdt = 1 / jumpDuration;
 
-export let drawPos = { x: 7, z: 1, y: 0 }; // todo revert
 let targetPos = { x: 7, z: 1, y: 0 };
 let t = 0;
+let stretchTargets: number[] = [];
+
+export let drawPos = { x: 7, z: 1, y: 0 }; // todo revert
 export let orientation = 0;
 export let stretch = 1;
 
@@ -26,6 +29,7 @@ export function init() {
         targetPos.x += dir[0];
         targetPos.z += dir[1];
         orientation = newOrient;
+        stretchTargets = [1 - stretchRange, 1 + stretchRange,  1];
     };
 
     input.up.add('forward', onUp([0, 1], 0));
@@ -33,18 +37,28 @@ export function init() {
     input.up.add('left', onUp([-1, 0], 1));
     input.up.add('right', onUp([1, 0], 3));
 
-    const onDown = (newOrient: number) => () => {
-        orientation = newOrient;
-        stretch = .7;
+    const onDown = () => {
+        if (t != 0) return;
+        stretchTargets = [1 - stretchRange];
     }
 
-    input.down.add('forward', onDown(0));
-    input.down.add('backward', onDown(2));
-    input.down.add('left', onDown(1));
-    input.down.add('right', onDown(3));
+    input.down.add('forward', onDown);
+    input.down.add('backward', onDown);
+    input.down.add('left', onDown);
+    input.down.add('right', onDown);
 }
 
+const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
+
 export function update(dt: number) {
+    if (stretchTargets.length != 0) {
+        if (Math.abs(stretch - stretchTargets[0]) < .01) {
+            stretchTargets.shift();
+        } else {
+            stretch = lerp(stretch, stretchTargets[0], stretchSpeed * dt);
+        }
+    }
+
     if (t == 0) return;
 
     dt = Math.min(dt, -t); // don't overshoot
@@ -57,7 +71,6 @@ export function update(dt: number) {
         drawPos.x = targetPos.x;
         drawPos.y = targetPos.y;
         drawPos.z = targetPos.z;
-        stretch = 1;
     }
 }
 
@@ -68,7 +81,6 @@ function move(dt: number) {
     // quadratic vertical movement
     const dy = -gravity * t - jumpVelocity;
     pos.y += dy * dt;
-    stretch = 1 + stretchiness * pos.y;
 
     // linear horizontal movement
     const dx = dxdt * dt;
