@@ -4,10 +4,10 @@ import * as input from "../input";
 // y' = -at + v // delta y depends on t_total
 // v_initial = -1/2 a (jump_duration)
 
-const jumpDuration = .138;
-const jumpVelocity = 9;
+const jumpDuration = .18;
+const jumpVelocity = 1.27 / jumpDuration;
 const stretchRange = .2;
-const stretchSpeed = 28;
+const stretchSpeed = 3.864 / jumpDuration;
 
 const gravity = 2 * jumpVelocity / jumpDuration;
 const dxdt = 1 / jumpDuration;
@@ -29,7 +29,7 @@ export function init() {
         targetPos.x += dir[0];
         targetPos.z += dir[1];
         orientation = newOrient;
-        stretchTargets = [1 - stretchRange, 1 + stretchRange,  1];
+        stretchTargets = [1 + stretchRange,  1];
     };
 
     input.up.add('forward', onUp([0, 1], 0));
