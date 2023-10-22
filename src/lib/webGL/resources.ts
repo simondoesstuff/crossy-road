@@ -103,3 +103,38 @@ export class Object3D {
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(attr.NORMAL.value), gl.STATIC_DRAW);
     }
 }
+
+export interface Models {
+    safe: Object3D;
+    safe2: Object3D;
+    road: Object3D;
+    roadStripe: Object3D;
+    roadCap: Object3D;
+    roadCap2: Object3D;
+    treeBase: Object3D;
+    treeTop: Object3D;
+    rock: Object3D;
+    track: Object3D;
+    trackPost: Object3D;
+    player: Object3D;
+}
+
+export let models: Models = {} as Models;
+
+async function loadModels(pack: string) {
+    const keys = [
+        'safe', 'safe2', 'road', 'roadStripe', 'roadCap', 'roadCap2',
+        'treeBase', 'treeTop', 'rock', 'track', 'trackPost', 'player'
+    ];
+
+    const prefix = `./resourcePacks/${pack}/`;
+
+    for (const model of keys) {
+        // @ts-ignore
+        models[model] = await Object3D.fromPath(prefix + model + '.ply');
+    }
+}
+
+export async function init() {
+    await loadModels('basic');
+}

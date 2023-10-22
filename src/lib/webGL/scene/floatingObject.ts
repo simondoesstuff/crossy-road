@@ -17,7 +17,7 @@ export async function init() {
 
     let rotation = 0;
     events.render.add((dt) => {
-        rotation += dt / 1000;
+        rotation += dt;
 
         let modelViewMatrix = mat4.create();
         mat4.translate(modelViewMatrix, modelViewMatrix, [0.0, -.1 * scale, -.7 * scale]);

@@ -22,8 +22,6 @@
     });
 </script>
 
-<svelte:window on:resize={glManager.checkCanvasSize}/>
-
 <!-- WebGL Canvas -->
 <canvas id="screen" class="w-screen h-screen"
         bind:this={canvas}>

@@ -1,22 +1,12 @@
-import {Object3D} from "$lib/webGL/resources";
+import {models, Object3D} from "$lib/webGL/resources";
 import {events, gl, modelViewMatrix, shader, updateModelViewMatrix, updateNormalMatrix} from "$lib/webGL/glManager";
+import * as player from "$lib/webGL/scene/player";
 import {mat4} from "gl-matrix";
+import {drawPos} from "$lib/webGL/scene/player";
 
 const tileWidth = 20;
-const safeHeight = .14;
-const roadHeight = .024;
-
-let safe: Object3D;
-let safe2: Object3D;
-let road: Object3D;
-let roadStripe: Object3D;
-let roadCap: Object3D;
-let roadCap2: Object3D;
-let treeBase: Object3D;
-let treeTop: Object3D;
-let rock: Object3D;
-let track: Object3D;
-let trackPost: Object3D;
+const roadHeight = .036;
+const safeHeight = .13;
 
 interface Tile {
     type: 'safe' | 'road' | 'obstacle' | 'train',
@@ -32,24 +22,12 @@ let tiles: Map<Object3D, Tile[]>;
 
 
 export async function init() {
-    safe = await Object3D.fromPath('./resourcePacks/basic/safe.ply');
-    safe2 = await Object3D.fromPath('./resourcePacks/basic/safe2.ply');
-    road = await Object3D.fromPath('./resourcePacks/basic/road.ply');
-    roadStripe = await Object3D.fromPath('./resourcePacks/basic/roadStripe.ply');
-    roadCap = await Object3D.fromPath('./resourcePacks/basic/roadCap.ply');
-    roadCap2 = await Object3D.fromPath('./resourcePacks/basic/roadCap2.ply');
-
-    track = await Object3D.fromPath('./resourcePacks/basic/track.ply');
-    trackPost = await Object3D.fromPath('./resourcePacks/basic/trackPost.ply');
-
-    treeBase = await Object3D.fromPath('./resourcePacks/basic/treeBase.ply');
-    treeTop = await Object3D.fromPath('./resourcePacks/basic/treeTop.ply');
-    rock = await Object3D.fromPath('./resourcePacks/basic/rock.ply');
-
     gl.clearColor(0, 0, 0.1, 1.0);
     gl.uniform4fv(shader.uniform.directionalLightDir, [2.0, 1.0, 0.7, 0]);
     gl.uniform4fv(shader.uniform.directionalLightColor, [0.5, 0.5, 0.5, 1]);
     gl.uniform4fv(shader.uniform.ambientLightColor, [.5, .5, .5, 1]);
+
+    player.init();
 
     addBoulevard('safe', 1);
     addBoulevard('road', 3);
@@ -72,18 +50,20 @@ export async function init() {
     addObstacle(11, 0);
     addObstacle(14, 9);
 
+    addTrain(6);
     addTrain(3);
     bakeLanesToTiles();
 
     let rotation = 0
     events.render.add((dt) => {
-        rotation += dt / 1000;
+        rotation += dt;
+        player.update(dt);
 
         const rootMatrix = mat4.create();
-        mat4.translate(rootMatrix, rootMatrix, [-190, -60, -150]);
-        mat4.rotateX(rootMatrix, rootMatrix, Math.PI / 6);
-        mat4.rotateY(rootMatrix, rootMatrix, Math.sin(rotation) * .2);
-        mat4.translate(rootMatrix, rootMatrix, [0, 0, -80]);
+        mat4.rotateX(rootMatrix, rootMatrix, Math.PI/4);
+        mat4.translate(rootMatrix, rootMatrix, [-140, -210, -100]);
+        mat4.rotateY(rootMatrix, rootMatrix, Math.sin(rotation) * .1);
+        // mat4.translate(rootMatrix, rootMatrix, [-200, 0, -200]);
 
         for (const object of tiles.keys()) {
             object.bind();
@@ -95,7 +75,7 @@ export async function init() {
                 const z = (tile.z ?? 0) * tileWidth;
 
                 mat4.translate(tileMatrix, tileMatrix, [x, y, z]);
-                mat4.rotate(tileMatrix, tileMatrix, Math.PI/2 * (tile.orientation ?? 0), [0, 1, 0]);
+                mat4.rotateY(tileMatrix, tileMatrix, Math.PI/2 * (tile.orientation ?? 0));
                 if (tile.type == 'safe') mat4.scale(tileMatrix, tileMatrix, [1, 3, 1]);
 
                 updateModelViewMatrix(tileMatrix);
@@ -104,53 +84,75 @@ export async function init() {
             }
         }
 
+        // player object
+        {
+            const playerMatrix = mat4.clone(rootMatrix);
+            const x = player.drawPos.x * tileWidth;
+            const z = -player.drawPos.z * tileWidth;
+            const tileZ = Math.trunc(player.drawPos.z);
+            const y = (player.drawPos.y + tileHeight(tileZ)) * tileWidth;
+
+            mat4.translate(playerMatrix, playerMatrix, [x, y, z]);
+            mat4.rotateY(playerMatrix, playerMatrix, Math.PI/2 * player.orientation);
+            mat4.scale(playerMatrix, playerMatrix, [1, player.stretch, 1]);
+
+            updateModelViewMatrix(playerMatrix);
+            updateNormalMatrix();
+            models.player.bind();
+            models.player.draw();
+        }
+
         updateModelViewMatrix(rootMatrix);
     });
 }
 
+function tileHeight(z: number) {
+    return lanes[z][0].type == 'safe' ? safeHeight : roadHeight;
+}
+
 export function addBoulevard(type: 'safe' | 'road', width: number) {
-    // const x = -lanes.length * tileWidth;
     const x = 19;
     switch (type) {
         case 'safe':
             for (let j = 0; j < width; j++) {
-                let obj = (j % 2 == 1) ? safe : safe2;
+                let obj = (j % 2 == 1) ? models.safe : models.safe2;
                 lanes.push([{ type: 'safe', obj, x }]);
             }
             break;
         case 'road':
             if (width == 1) {
-                lanes.push([{ type: 'road', obj: road, x }]);
+                lanes.push([{ type: 'road', obj: models.road, x }]);
             } else {
-                lanes.push([{ type: 'road', obj: roadCap2, x }]);
+                lanes.push([{ type: 'road', obj: models.roadCap2, x }]);
                 for (let j = 0; j < width - 2; j++) {
-                    lanes.push([{ type: 'road', obj: roadStripe, x }]);
+                    lanes.push([{ type: 'road', obj: models.roadStripe, x }]);
                 }
-                lanes.push([{ type: 'road', obj: roadCap, x }]);
+                lanes.push([{ type: 'road', obj: models.roadCap, x }]);
             }
             break;
     }
 }
 
 export function addTrain(z: number) {
-    const shift = lanes[z][0].type == 'safe' ? safeHeight : roadHeight;
-    lanes[z].push({ type: 'train', obj: track, x: 19, y: shift });
-    lanes[z].push({ type: 'train', obj: trackPost, x: 5, y: shift });
+    const shift = tileHeight(z);
+    lanes[z].push({ type: 'train', obj: models.track, x: 19, y: shift });
+    lanes[z].push({ type: 'train', obj: models.trackPost, x: 5, y: shift });
 }
 
 export function addObstacle(x: number, z: number, orientation?: number, variant?: number) {
+    const shift = tileHeight(z);
     orientation ??= Math.floor(Math.random() * 4);
     // todo rock variants
-    lanes[z].push({ type: 'obstacle', obj: rock, x, y: safeHeight, orientation });
+    lanes[z].push({ type: 'obstacle', obj: models.rock, x, y: shift, orientation });
 }
 
 export function addTree(x: number, z: number, height: number) {
     let tree = [
-        { type: 'obstacle', obj: treeBase, x, y: safeHeight } as Tile,
+        { type: 'obstacle', obj: models.treeBase, x, y: safeHeight } as Tile,
     ];
 
     for (let i = 0; i < height; i++) {
-        tree.push({ type: 'obstacle', obj: treeTop, x, y: .4 * i + safeHeight });
+        tree.push({ type: 'obstacle', obj: models.treeTop, x, y: .4 * i + safeHeight });
     }
 
     // ordering in the lane is not important

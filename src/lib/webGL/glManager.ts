@@ -3,6 +3,8 @@ import {type CrossyShader, initShaders, type Shader} from "$lib/webGL/shader";
 import {load} from '@loaders.gl/core';
 import {PLYLoader} from "@loaders.gl/ply";
 import {mat4} from "gl-matrix";
+import {init as inputInit} from '$lib/webGL/input';
+import {init as resourcesInit} from '$lib/webGL/resources';
 import {Object3D} from "$lib/webGL/resources";
 
 export let gl: WebGLRenderingContext;
@@ -26,6 +28,10 @@ export async function init(canvas: HTMLCanvasElement) {
         throw "Unable to initialize WebGL. Your browser or machine may not support it.";
     }
 
+    addEventListener('resize', () => checkCanvasSize());
+    inputInit();
+    await resourcesInit();
+
     // load shaders
     // set shader uniforms
 
@@ -34,10 +40,14 @@ export async function init(canvas: HTMLCanvasElement) {
     gl.useProgram(shader.program);
 
     events.resize.add((w, h) => {
+        console.log('resize')
         let projMatrix = mat4.create();
-        const fov = 50 * Math.PI / 180;
-        const far = null!; // todo make far frustum dist finite?
-        mat4.perspective(projMatrix, fov, gl.canvas.width / gl.canvas.height, 0.1, far);
+        const far = 1000;
+        const scale = 190;
+        const aspect = w/h;
+        const orthHeight = scale;
+        const orthWidth = scale * aspect;
+        mat4.ortho(projMatrix, -orthWidth/2, orthWidth/2, -orthHeight/2, orthHeight/2, 0.1, far);
         gl.uniformMatrix4fv(shader.uniform.projectionMatrix, false, projMatrix);
     });
 
@@ -95,7 +105,7 @@ export function startRendering() {
         const deltaTime = now - then;
         then = now;
 
-        events.render.fire(deltaTime);
+        events.render.fire(deltaTime/1000);
         requestAnimationFrame(doFrame);
     }
 
