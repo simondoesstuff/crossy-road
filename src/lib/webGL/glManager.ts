@@ -1,4 +1,4 @@
-import {Event, normalize} from './utils';
+import {Event} from './utils';
 import {type CrossyShader, initShaders, type Shader} from "$lib/webGL/shader";
 import {load} from '@loaders.gl/core';
 import {PLYLoader} from "@loaders.gl/ply";

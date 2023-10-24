@@ -17,21 +17,3 @@ export class Event<T extends Function> {
 export async function importFile(path: string) {
     return (await import(path + '?raw')).default;
 }
-
-export function magnitude(v: number[]) {
-    let len = 0;
-    for (let i = 0; i < v.length; i++) {
-        len += v[i] * v[i];
-    }
-    return Math.sqrt(len);
-}
-
-export function normalize(v: number[]) {
-    const len = magnitude(v);
-    if (len === 0) return v;
-    for (let i = 0; i < v.length; i++) {
-        v[i] /= len;
-    }
-    return v;
-}
-

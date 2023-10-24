@@ -2,7 +2,7 @@ import {models, Object3D} from "$lib/webGL/resources";
 import {events, gl, modelViewMatrix, shader, updateModelViewMatrix, updateNormalMatrix} from "$lib/webGL/glManager";
 import * as player from "$lib/webGL/scene/player";
 import {mat4} from "gl-matrix";
-import {drawPos} from "$lib/webGL/scene/player";
+import {Vec} from "$lib/webGL/linear_algebra";
 
 const tileWidth = 20;
 const roadHeight = .036;
@@ -11,15 +11,18 @@ const safeHeight = .13;
 interface Tile {
     type: 'safe' | 'road' | 'obstacle' | 'train',
     obj: Object3D,
-    x?: number,
-    y?: number,
-    z?: number,
+    pos: Vec,
     orientation?: number,
 }
 
 let lanes: Tile[][] = [];
 let tiles: Map<Object3D, Tile[]>;
 
+// the camera "tries" to center around the player, lerps towards
+// when it's still, it starts "falling" behind on the z axis
+let camPos = new Vec();
+const camLerpSpeed = 1;
+const camBoredSpeed = .1;
 
 export async function init() {
     gl.clearColor(0, 0, 0.1, 1.0);
@@ -59,6 +62,10 @@ export async function init() {
         rotation += dt;
         player.update(dt);
 
+        // camera
+        {
+        }
+
         const rootMatrix = mat4.create();
         mat4.rotateX(rootMatrix, rootMatrix, Math.PI/4);
         mat4.translate(rootMatrix, rootMatrix, [-140, -210, -100]);
@@ -70,9 +77,9 @@ export async function init() {
 
             for (const tile of tiles.get(object)!) {
                 const tileMatrix = mat4.clone(rootMatrix);
-                const x = (tile.x ?? 0) * tileWidth;
-                const y = (tile.y ?? 0) * tileWidth;
-                const z = (tile.z ?? 0) * tileWidth;
+                const x = (tile.pos.x ?? 0) * tileWidth;
+                const y = (tile.pos.y ?? 0) * tileWidth;
+                const z = (tile.pos.z ?? 0) * tileWidth;
 
                 mat4.translate(tileMatrix, tileMatrix, [x, y, z]);
                 mat4.rotateY(tileMatrix, tileMatrix, Math.PI/2 * (tile.orientation ?? 0));
@@ -87,10 +94,10 @@ export async function init() {
         // player object
         {
             const playerMatrix = mat4.clone(rootMatrix);
-            const x = player.drawPos.x * tileWidth;
-            const z = -player.drawPos.z * tileWidth;
-            const tileZ = Math.trunc(player.drawPos.z);
-            const y = (player.drawPos.y + tileHeight(tileZ)) * tileWidth;
+            const x = player.pos.x * tileWidth;
+            const z = -player.pos.z * tileWidth;
+            const tileZ = Math.trunc(player.pos.z);
+            const y = (player.pos.y + tileHeight(tileZ)) * tileWidth;
 
             mat4.translate(playerMatrix, playerMatrix, [x, y, z]);
             mat4.rotateY(playerMatrix, playerMatrix, Math.PI/2 * player.orient);
@@ -117,18 +124,18 @@ export function addBoulevard(type: 'safe' | 'road', width: number) {
         case 'safe':
             for (let j = 0; j < width; j++) {
                 let obj = (j % 2 == 1) ? models.safe : models.safe2;
-                lanes.push([{ type: 'safe', obj, x }]);
+                lanes.push([{ type: 'safe', obj, pos: new Vec(x) }]);
             }
             break;
         case 'road':
             if (width == 1) {
-                lanes.push([{ type: 'road', obj: models.road, x }]);
+                lanes.push([{ type: 'road', obj: models.road, pos: new Vec(x) }]);
             } else {
-                lanes.push([{ type: 'road', obj: models.roadCap2, x }]);
+                lanes.push([{ type: 'road', obj: models.roadCap2, pos: new Vec(x) }]);
                 for (let j = 0; j < width - 2; j++) {
-                    lanes.push([{ type: 'road', obj: models.roadStripe, x }]);
+                    lanes.push([{ type: 'road', obj: models.roadStripe, pos: new Vec(x) }]);
                 }
-                lanes.push([{ type: 'road', obj: models.roadCap, x }]);
+                lanes.push([{ type: 'road', obj: models.roadCap, pos: new Vec(x) }]);
             }
             break;
     }
@@ -136,24 +143,25 @@ export function addBoulevard(type: 'safe' | 'road', width: number) {
 
 export function addTrain(z: number) {
     const shift = tileHeight(z);
-    lanes[z].push({ type: 'train', obj: models.track, x: 19, y: shift });
-    lanes[z].push({ type: 'train', obj: models.trackPost, x: 5, y: shift });
+    lanes[z].push({ type: 'train', obj: models.track, pos: new Vec(19, shift) });
+    lanes[z].push({ type: 'train', obj: models.trackPost, pos: new Vec(5, shift) });
 }
 
 export function addObstacle(x: number, z: number, orientation?: number, variant?: number) {
     const shift = tileHeight(z);
     orientation ??= Math.floor(Math.random() * 4);
     // todo rock variants
-    lanes[z].push({ type: 'obstacle', obj: models.rock, x, y: shift, orientation });
+    lanes[z].push({ type: 'obstacle', obj: models.rock, pos: new Vec(x, shift), orientation });
 }
 
 export function addTree(x: number, z: number, height: number) {
+    const pos = new Vec(x, safeHeight);
     let tree = [
-        { type: 'obstacle', obj: models.treeBase, x, y: safeHeight } as Tile,
+        { type: 'obstacle', obj: models.treeBase, pos} as Tile,
     ];
 
     for (let i = 0; i < height; i++) {
-        tree.push({ type: 'obstacle', obj: models.treeTop, x, y: .4 * i + safeHeight });
+        tree.push({ type: 'obstacle', obj: models.treeTop, pos: new Vec(x, .4 * i + safeHeight) });
     }
 
     // ordering in the lane is not important
@@ -165,7 +173,8 @@ function bakeLanesToTiles() {
     for (let i = 0; i < lanes.length; i++) {
         const lane = lanes[i];
         for (const tile of lane) {
-            tile.z = -i;
+            tile.pos.expandDimensionality(3);
+            tile.pos.z = -i;
             if (!tiles.has(tile.obj)) tiles.set(tile.obj, []);
             tiles.get(tile.obj)!.push(tile);
         }

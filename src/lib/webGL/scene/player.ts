@@ -1,4 +1,6 @@
 import * as input from "../input";
+import { lerp } from "../animation";
+import {Vec} from "$lib/webGL/linear_algebra";
 
 // y = -1/2 at^2 + vt
 // y' = -at + v // delta y depends on t_total
@@ -13,23 +15,22 @@ const spinSpeed = 2.5 / jumpDuration;
 const gravity = 2 * jumpVelocity / jumpDuration;
 const dxdt = 1 / jumpDuration;
 
+export let pos = new Vec(7, 0, 0); // initial position
+export let orient = 0;
+
+export let stretch = 1;
 let t = 0;
-let targetPos = { x: 7, z: 1, y: 0 };
+let posTarget = pos.clone();
 let stretchTargets: number[] = [];
 let targetOrient = 0;
-
-export let drawPos = { x: 7, z: 1, y: 0 }; // todo revert
-export let orient = 0;
-export let stretch = 1;
-
 
 export function init() {
     const onUp = (dir: [number, number], newOrient: number) => () => {
         if (t != 0) return;
 
         t = -jumpDuration;
-        targetPos.x += dir[0];
-        targetPos.z += dir[1];
+        posTarget.x += dir[0];
+        posTarget.z += dir[1];
         targetOrient = newOrient;
         stretchTargets = [1 + stretchRange,  1];
     };
@@ -50,8 +51,6 @@ export function init() {
     input.down.add('right', onDown);
 }
 
-const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
-
 export function update(dt: number) {
     if (stretchTargets.length != 0) {
         if (Math.abs(stretch - stretchTargets[0]) < .01) {
@@ -69,6 +68,7 @@ export function update(dt: number) {
                 orient -= 4;
             }
         }
+
         orient = lerp(orient, targetOrient, spinSpeed * dt);
     }
 
@@ -81,22 +81,17 @@ export function update(dt: number) {
 
     if (t >= 0) {
         t = 0;
-        drawPos.x = targetPos.x;
-        drawPos.y = targetPos.y;
-        drawPos.z = targetPos.z;
+        pos = posTarget.clone();
     }
 }
 
 function move(dt: number) {
-    const pos = drawPos;
-    const target = targetPos;
-
     // quadratic vertical movement
     const dy = -gravity * t - jumpVelocity;
     pos.y += dy * dt;
 
     // linear horizontal movement
     const dx = dxdt * dt;
-    if (pos.x != target.x) pos.x += dx * Math.sign(target.x - pos.x);
-    if (pos.z != target.z) pos.z += dx * Math.sign(target.z - pos.z);
+    if (pos.x != posTarget.x) pos.x += dx * Math.sign(posTarget.x - pos.x);
+    if (pos.z != posTarget.z) pos.z += dx * Math.sign(posTarget.z - pos.z);
 }
