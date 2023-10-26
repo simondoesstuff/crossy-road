@@ -1,6 +1,7 @@
 import {models, Object3D} from "$lib/webGL/resources";
-import {events, gl, modelViewMatrix, shader, updateModelViewMatrix, updateNormalMatrix} from "$lib/webGL/glManager";
+import {events, gl, shader, updateModelViewMatrix, updateNormalMatrix} from "$lib/webGL/glManager";
 import * as player from "$lib/webGL/scene/player";
+import * as camera from "$lib/webGL/scene/camera";
 import {mat4} from "gl-matrix";
 import {Vec} from "$lib/webGL/linear_algebra";
 
@@ -18,19 +19,14 @@ interface Tile {
 let lanes: Tile[][] = [];
 let tiles: Map<Object3D, Tile[]>;
 
-// the camera "tries" to center around the player, lerps towards
-// when it's still, it starts "falling" behind on the z axis
-let camPos = new Vec();
-const camLerpSpeed = 1;
-const camBoredSpeed = .1;
-
 export async function init() {
     gl.clearColor(0, 0, 0.1, 1.0);
-    gl.uniform4fv(shader.uniform.directionalLightDir, [2.0, 1.0, 0.7, 0]);
-    gl.uniform4fv(shader.uniform.directionalLightColor, [0.5, 0.5, 0.5, 1]);
-    gl.uniform4fv(shader.uniform.ambientLightColor, [.5, .5, .5, 1]);
+    gl.uniform4fv(shader.uniform.directionalLightDir, [-1.0, 1.0, 0.9, 0]);
+    gl.uniform4fv(shader.uniform.directionalLightColor, [0.6, 0.6, 0.6, 1]);
+    gl.uniform4fv(shader.uniform.ambientLightColor, [.57, .57, .57, 1]);
 
     player.init();
+    player.onMove.add(() => camera.caffinate());
 
     addBoulevard('safe', 1);
     addBoulevard('road', 3);
@@ -61,16 +57,16 @@ export async function init() {
     events.render.add((dt) => {
         rotation += dt;
         player.update(dt);
-
-        // camera
-        {
-        }
+        camera.update(dt, player.pos);
 
         const rootMatrix = mat4.create();
-        mat4.rotateX(rootMatrix, rootMatrix, Math.PI/4);
-        mat4.translate(rootMatrix, rootMatrix, [-140, -210, -100]);
-        mat4.rotateY(rootMatrix, rootMatrix, Math.sin(rotation) * .1);
-        // mat4.translate(rootMatrix, rootMatrix, [-200, 0, -200]);
+        mat4.rotateX(rootMatrix, rootMatrix, Math.PI / 4);
+        mat4.rotateY(rootMatrix, rootMatrix, Math.PI / -10);
+
+        let camPos = camera.pos.mul(tileWidth).unwrapF32Array();
+        camPos[0] *= -1; // flip x axis
+        mat4.translate(rootMatrix, rootMatrix, camPos);
+        mat4.translate(rootMatrix, rootMatrix, [-35, -200, -100]);
 
         for (const object of tiles.keys()) {
             object.bind();

@@ -1,6 +1,7 @@
 import * as input from "../input";
 import { lerp } from "../animation";
 import {Vec} from "$lib/webGL/linear_algebra";
+import {Event} from "$lib/webGL/utils";
 
 // y = -1/2 at^2 + vt
 // y' = -at + v // delta y depends on t_total
@@ -17,8 +18,9 @@ const dxdt = 1 / jumpDuration;
 
 export let pos = new Vec(7, 0, 0); // initial position
 export let orient = 0;
-
 export let stretch = 1;
+export const onMove = new Event<() => void>();
+
 let t = 0;
 let posTarget = pos.clone();
 let stretchTargets: number[] = [];
@@ -33,6 +35,7 @@ export function init() {
         posTarget.z += dir[1];
         targetOrient = newOrient;
         stretchTargets = [1 + stretchRange,  1];
+        onMove.fire();
     };
 
     input.up.add('forward', onUp([0, 1], 0));

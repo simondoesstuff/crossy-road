@@ -7,6 +7,10 @@ export class Vec {
         this.data = values;
     }
 
+    static zero(n: number) {
+        return new Vec(...Array(n).fill(0));
+    }
+
     map(f: (x: number, i: number, array: number[]) => number): this {
         return new Vec(...this.data.map(f)) as this;
     }
@@ -59,15 +63,11 @@ export class Vec {
                 acc + x * other.data[i], 0);
     }
 
-    lerp(other: this, t: number) {
-        return this.merge(other, (x, y) => x + (y - x) * t);
-    }
-
     magnitude() {
         return Math.sqrt(this.dot(this));
     }
 
-    setMagnitude(mag: number) {
+    scale(mag: number) {
         return this.normalized().mul(mag);
     }
 
@@ -91,6 +91,10 @@ export class Vec {
         for (let i = this.n; i < n; i++) {
             this.data.push(0);
         }
+    }
+
+    unwrapF32Array() {
+        return new Float32Array(this.data);
     }
 
     get x() { return this.data[0]; }

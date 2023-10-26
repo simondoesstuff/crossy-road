@@ -40,7 +40,6 @@ export async function init(canvas: HTMLCanvasElement) {
     gl.useProgram(shader.program);
 
     events.resize.add((w, h) => {
-        console.log('resize')
         let projMatrix = mat4.create();
         const far = 1000;
         const scale = 190;
