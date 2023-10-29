@@ -46,7 +46,7 @@ export async function init() {
 
 export function isObstacle(x: number, z: number) {
     const lane = lanes[z];
-    if (lane.length < x) return false;
+    if (!lane) return true; // out of bounds might as well be an obstacle
 
     for (const tile of lane) {
         if (tile.pos.x == x) {
@@ -76,7 +76,7 @@ function updateDisplay() {
     }
 
     const roadHeight = .72;
-    const safeHeight = 2.6;
+    const safeHeight = 2.7;
     const offsets = lanes.map((_, z) =>
         isGrass(z) ? safeHeight : roadHeight
     );
@@ -118,7 +118,7 @@ export function addBoulevard(type: 'safe' | 'road', width: number) {
 }
 
 export function addTrain(z: number) {
-    lanes[z].push({ type: 'train', obj: models.track, pos: new Vec(19) });
+    lanes[z].push({ type: 'train', obj: models.track, pos: new Vec(18.5) });
     lanes[z].push({ type: 'train', obj: models.trackPost, pos: new Vec(5) });
 }
 
