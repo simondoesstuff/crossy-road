@@ -2,6 +2,7 @@ import * as input from "../input";
 import { lerp } from "../animation";
 import {Vec} from "$lib/webGL/linear_algebra";
 import {Event} from "$lib/webGL/utils";
+import {isObstacle} from "$lib/webGL/scene/state/state";
 
 // y = -1/2 at^2 + vt
 // y' = -at + v // delta y depends on t_total
@@ -30,11 +31,18 @@ export function init() {
     const onUp = (dir: [number, number], newOrient: number) => () => {
         if (t != 0) return;
 
+        targetOrient = newOrient;
+        stretchTargets = [1 + stretchRange,  1];
+
+        {
+            const x = Math.trunc(pos.x) + dir[0];
+            const z = Math.trunc(pos.z) + dir[1];
+            if (isObstacle(x, z)) return;
+        }
+
         t = -jumpDuration;
         posTarget.x += dir[0];
         posTarget.z += dir[1];
-        targetOrient = newOrient;
-        stretchTargets = [1 + stretchRange,  1];
         onMove.fire();
     };
 
