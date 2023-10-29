@@ -1,11 +1,10 @@
+// todo consider a clever init system that uses awaitAll to maximize concurrency
+
 import {Event} from './utils';
 import {type CrossyShader, initShaders, type Shader} from "$lib/webGL/shader";
-import {load} from '@loaders.gl/core';
-import {PLYLoader} from "@loaders.gl/ply";
 import {mat4} from "gl-matrix";
 import {init as inputInit} from '$lib/webGL/input';
 import {init as resourcesInit} from '$lib/webGL/resources';
-import {Object3D} from "$lib/webGL/resources";
 
 export let gl: WebGLRenderingContext;
 
@@ -28,7 +27,7 @@ export async function init(canvas: HTMLCanvasElement) {
         throw "Unable to initialize WebGL. Your browser or machine may not support it.";
     }
 
-    addEventListener('resize', () => checkCanvasSize());
+    addEventListener('resize', () => checkCanvasSize()); // todo resize isn't working
     inputInit();
     await resourcesInit();
 

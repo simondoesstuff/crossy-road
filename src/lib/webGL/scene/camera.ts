@@ -5,7 +5,7 @@ import {lerpVec} from "$lib/webGL/animation";
 // the camera "tries" to center around the player, lerps towards
 // when it's still, it starts "falling" behind on the z axis
 
-export let pos = Vec.zero(3);
+export let pos = new Vec(7, 0, 0);
 const lerpSpeed = 3;
 const boredTime = 5;
 const boredSpeed = .5;
@@ -30,5 +30,4 @@ export function update(dt: number, target: Vec) {
     target2.z -= boredSpeed * effectiveTimeSince;
 
     pos = lerpVec(pos, target2, lerpSpeed * dt)
-    console.log(pos.data)
 }

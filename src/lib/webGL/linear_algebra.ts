@@ -83,7 +83,7 @@ export class Vec {
 
     // Expands the dimensionality of the vector to n
     // by filling the new dimensions with 0
-    expandDimensionality(n: number) {
+    expandDim(n: number) {
         if (n < this.n) {
             throw new Error('Cannot expand dimensionality to a smaller size');
         }

@@ -1,7 +1,6 @@
 <script lang="ts">
     import * as glManager from "$lib/webGL/glManager";
-    import * as floatScene from "$lib/webGL/scene/floatingObject";
-    import * as crossyScene from "$lib/webGL/scene/crossyRoad";
+    import * as crossyScene from "$lib/webGL/scene/crossyRoadScene";
     import {onMount} from "svelte";
 
     let canvas: HTMLCanvasElement;
@@ -10,7 +9,6 @@
         // todo revert try catch
         // try {
             await glManager.init(canvas);
-            // await floatScene.init();
             await crossyScene.init();
 
             glManager.startRendering();
