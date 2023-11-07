@@ -4,6 +4,7 @@ import * as player from "$lib/webGL/scene/player";
 import * as camera from "$lib/webGL/scene/camera";
 import {mat4} from "gl-matrix";
 import type {Tile} from "$lib/webGL/scene/state/state";
+import {Vec} from "$lib/webGL/linear_algebra";
 
 
 const tileWidth = 20;
@@ -14,14 +15,36 @@ let offsets: number[];
 
 export async function init() {
     gl.clearColor(0, 0, 0.1, 1.0);
-    gl.uniform4fv(shader.uniform.directionalLightDir, [-1.0, 1.0, 0.9, 0]);
-    gl.uniform4fv(shader.uniform.directionalLightColor, [0.6, 0.6, 0.6, 1]);
-    gl.uniform4fv(shader.uniform.ambientLightColor, [.6, .6, .6, 1]);
+    gl.uniform4fv(shader.uniform.directionalLightColor, [1, 1, 1, 1]);
+    gl.uniform4fv(shader.uniform.ambientLightColor, [.8, .8, .8, 1]);
 
     player.init();
     player.onMove.add(() => camera.caffinate());
 
+    let rot = 0;
     events.render.add((dt) => {
+        rot += dt * 90;
+
+        {
+            const yaw = 30 * Math.PI / 180;
+            const pitch = rot * Math.PI / 180;
+            const dir = new Vec(
+                Math.cos(yaw) * Math.cos(pitch),
+                Math.sin(pitch),
+                Math.sin(yaw) * Math.cos(pitch),
+            );
+
+            gl.uniform4fv(shader.uniform.directionalLightDir, [-10,10,-10,1]);
+
+            models.player.bind();
+            const matrix = mat4.create();
+            mat4.scale(matrix, matrix, [.1, .1, .1]);
+            updateModelViewMatrix(matrix);
+            models.player.draw();
+
+            gl.uniform4fv(shader.uniform.directionalLightDir, [...dir.data, 0]);
+        }
+
         player.update(dt);
         camera.update(dt, player.pos);
 

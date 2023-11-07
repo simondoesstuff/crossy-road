@@ -1,8 +1,12 @@
 import * as input from "../input";
 import { lerp } from "../animation";
-import {Vec} from "$lib/webGL/linear_algebra";
+import {BoundingBox, Vec} from "$lib/webGL/linear_algebra";
 import {Event} from "$lib/webGL/utils";
-import {isObstacle} from "$lib/webGL/scene/state/state";
+import {carsIntersecting, isObstacle, objectsIntersecting} from "$lib/webGL/scene/state/state";
+import {models} from "$lib/webGL/resources";
+
+// todo consider a late update function to--
+// increment the animations in-between frames
 
 // y = -1/2 at^2 + vt
 // y' = -at + v // delta y depends on t_total
@@ -44,6 +48,10 @@ export function init() {
         posTarget.x += dir[0];
         posTarget.z += dir[1];
         onMove.fire();
+
+        const playerBox = models.player.boundingRect;
+        const objs = carsIntersecting(pos.xz, playerBox);
+        console.log('objs', objs);
     };
 
     input.up.add('forward', onUp([0, 1], 0));

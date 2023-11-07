@@ -4,6 +4,8 @@ import {PLYLoader} from "@loaders.gl/ply";
 import {load} from "@loaders.gl/core";
 import type {PLYMesh} from "@loaders.gl/ply/dist/lib/ply-types";
 import {gl, shader as glShader} from "$lib/webGL/glManager";
+import {BoundingBox} from "$lib/webGL/linear_algebra";
+import {Vec} from "$lib/webGL/linear_algebra";
 
 /// Note, only supports ply files.
 export class Object3D {
@@ -15,11 +17,35 @@ export class Object3D {
     private readonly mesh: PLYMesh;
     private readonly count: number;
 
+    public readonly boundingBox: [Vec, Vec]
+    public readonly boundingRect: [Vec, Vec];
+
     public constructor(mesh: PLYMesh) {
         this.mesh = mesh;
         if (!mesh.indices) throw new Error("No indices found in mesh.");
         this.count = mesh.indices.value.length;
         this.reinitializeBuffers();
+
+        this.boundingBox = this.measureBounds();
+        const a = this.boundingBox[0].xz;
+        const b = this.boundingBox[1].xz;
+        this.boundingRect = [a, b];
+    }
+
+    private measureBounds(): [Vec, Vec] {
+        const attr = this.mesh.attributes;
+        const pos = attr.POSITION.value;
+        const n = pos.length;
+        const min = new Float32Array(3);
+        const max = new Float32Array(3);
+        for (let i = 0; i < n; i += 3) {
+            for (let j = 0; j < 3; j++) {
+                min[j] = Math.min(min[j], pos[i + j]);
+                max[j] = Math.max(max[j], pos[i + j]);
+            }
+        }
+
+        return [new Vec(...min), new Vec(...max)];
     }
 
     public static async fromPath(path: string) {
@@ -117,6 +143,7 @@ export interface Models {
     track: Object3D;
     trackPost: Object3D;
     player: Object3D;
+    car1: Object3D;
 }
 
 export let models: Models = {} as Models;
@@ -124,7 +151,8 @@ export let models: Models = {} as Models;
 async function loadModels(pack: string) {
     const keys = [
         'safe', 'safe2', 'road', 'roadStripe', 'roadCap', 'roadCap2',
-        'treeBase', 'treeTop', 'rock', 'track', 'trackPost', 'player'
+        'treeBase', 'treeTop', 'rock', 'track', 'trackPost', 'player',
+        'car1'
     ];
 
     const prefix = `./resourcePacks/${pack}/`;

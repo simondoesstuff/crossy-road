@@ -1,5 +1,5 @@
 export class Vec {
-    public readonly n: number;
+    public n: number;
     public data: number[];
 
     constructor(...values: number[]) {
@@ -63,8 +63,12 @@ export class Vec {
                 acc + x * other.data[i], 0);
     }
 
-    magnitude() {
-        return Math.sqrt(this.dot(this));
+    mag2() {
+        return this.dot(this);
+    }
+
+    mag() {
+        return Math.sqrt(this.mag2());
     }
 
     scale(mag: number) {
@@ -72,7 +76,7 @@ export class Vec {
     }
 
     normalized() {
-        const mag = this.magnitude();
+        const mag = this.mag();
         if (mag === 0) return this;
         return this.div(mag);
     }
@@ -91,6 +95,18 @@ export class Vec {
         for (let i = this.n; i < n; i++) {
             this.data.push(0);
         }
+
+        this.n = n;
+    }
+
+    // remove a specified dimension from the vector
+    dropDim(n: number) {
+        if (n >= this.n) {
+            throw new Error('Cannot drop dimensionality larger than size');
+        }
+
+        this.data.splice(n, 1);
+        this.n--;
     }
 
     unwrapF32Array() {
@@ -103,4 +119,64 @@ export class Vec {
     set x(x: number) { this.data[0] = x; }
     set y(y: number) { this.data[1] = y; }
     set z(z: number) { this.data[2] = z; }
+
+    get xy() { return new Vec(this.x, this.y); }
+    get xz() { return new Vec(this.x, this.z); }
+    get yz() { return new Vec(this.y, this.z); }
 }
+
+export const BoundingBox = {
+    intersect: (a: Vec, b: Vec, c: Vec, d: Vec) => {
+        console.log(a, b, c, d)
+        for (let dim = 0; dim < a.n; dim++) {
+            const ai = a.data[dim];
+            const bi = b.data[dim];
+            const ci = c.data[dim];
+            const di = d.data[dim];
+
+            if (ai > di || ci > bi) return false;
+        }
+
+        return true;
+    },
+
+    // intersect, shifting both boxes by the same amount
+    intersectAt(
+        originA: Vec,
+        a: Vec,
+        b: Vec,
+        originB: Vec,
+        c: Vec,
+        d: Vec
+    ) {
+        a = a.add(originA);
+        b = b.add(originA);
+        c = c.add(originB);
+        d = d.add(originB);
+        return BoundingBox.intersect(a, b, c, d);
+    }
+}
+
+// export class BoundingBox {
+//     public a: Vec;
+//     public b: Vec;
+//     public get size() { return this.b.sub(this.a); }
+//
+//     constructor(a: Vec, b: Vec) {
+//         if (a.n != b.n) throw new Error("Dimension mismatch");
+//         this.a = a;
+//         this.b = b;
+//     }
+//
+//     containsPoint(v: Vec) {
+//         if (v.n != this.a.n) throw new Error("Dimension mismatch");
+//         for (let i = 0; i < v.n; i++) {
+//             if (v.data[i] < this.a.data[i] || v.data[i] > this.b.data[i]) return false;
+//         }
+//         return true;
+//     }
+//
+//     intersects(other: BoundingBox) {
+//
+//     }
+// }
