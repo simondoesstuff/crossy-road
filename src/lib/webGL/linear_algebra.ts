@@ -127,7 +127,6 @@ export class Vec {
 
 export const BoundingBox = {
     intersect: (a: Vec, b: Vec, c: Vec, d: Vec) => {
-        console.log(a, b, c, d)
         for (let dim = 0; dim < a.n; dim++) {
             const ai = a.data[dim];
             const bi = b.data[dim];
@@ -156,27 +155,3 @@ export const BoundingBox = {
         return BoundingBox.intersect(a, b, c, d);
     }
 }
-
-// export class BoundingBox {
-//     public a: Vec;
-//     public b: Vec;
-//     public get size() { return this.b.sub(this.a); }
-//
-//     constructor(a: Vec, b: Vec) {
-//         if (a.n != b.n) throw new Error("Dimension mismatch");
-//         this.a = a;
-//         this.b = b;
-//     }
-//
-//     containsPoint(v: Vec) {
-//         if (v.n != this.a.n) throw new Error("Dimension mismatch");
-//         for (let i = 0; i < v.n; i++) {
-//             if (v.data[i] < this.a.data[i] || v.data[i] > this.b.data[i]) return false;
-//         }
-//         return true;
-//     }
-//
-//     intersects(other: BoundingBox) {
-//
-//     }
-// }

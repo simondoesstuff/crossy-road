@@ -14,6 +14,47 @@ export class Event<T extends Function> {
     }
 }
 
+export class Store<T> {
+    private value: T;
+    private readonly listeners: Event<(value: T) => void> = new Event();
+
+    public constructor(value: T) {
+        this.value = value;
+    }
+
+    public get() {
+        return this.value;
+    }
+
+    public set(value: T) {
+        if (value === this.value) return;
+        this.value = value;
+        this.listeners.fire(value);
+    }
+
+    public listen(handler: (value: T) => void) {
+        this.listeners.add(handler);
+    }
+
+    public unlisten(handler: (value: T) => void) {
+        this.listeners.remove(handler);
+    }
+
+    public listenWhile(handler: (value: T) => boolean) {
+        const listener = (value: T) => {
+            if (!handler(value)) this.unlisten(listener);
+        };
+        this.listen(listener);
+    }
+
+    public listenFor(state: T, handler: () => void) {
+        this.listen((t) => {
+            if (state !== t) return;
+            handler();
+        });
+    }
+}
+
 export async function importFile(path: string) {
     return (await import(path + '?raw')).default;
 }

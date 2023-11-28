@@ -2,10 +2,16 @@ import type {Object3D} from "$lib/webGL/resources";
 import {BoundingBox, Vec} from "$lib/webGL/linear_algebra";
 import {models} from "$lib/webGL/resources";
 import * as display from "$lib/webGL/scene/display";
-import {events} from "$lib/webGL/glManager";
+import {events as glEvents} from "$lib/webGL/glManager";
+import * as player from "$lib/webGL/scene/player";
+import {Store} from "$lib/webGL/utils";
 
 
 const xBounds = [0, 19]; // objects that leave the bounds are removed
+const roadHeight = .72;
+const safeHeight = 2.6;
+
+export const score = new Store(0);
 
 export interface Tile {
     type: 'safe' | 'road' | 'obstacle' | 'train' | 'log' | 'car',
@@ -25,6 +31,7 @@ let lanes: Tile[][] = [];
 
 export async function init() {
     let dispInit = display.init(); // promise captured for concurrent initialization
+    player.init();
 
     addBoulevard('safe', 1);
     addBoulevard('road', 3);
@@ -50,27 +57,46 @@ export async function init() {
     addTrain(6);
     addTrain(3);
 
-    lanes[3].push({ type: 'car', obj: models.rock, pos: new Vec(5), orientation: 1, xVel: 2 });
+    lanes[3].push({type: 'car', obj: models.rock, pos: new Vec(5), orientation: 1, xVel: 2});
 
     await dispInit;
     updateDisplay();
 
-    events.render.add(marchObjects);
+    glEvents.frame.add(marchObjects);
+
+    glEvents.lateFrame.add((dt: number) => {
+        if (!player.alive.get()) return;
+
+        const playerBox = models.player.boundingRect;
+        const objs = carsIntersecting(player.pos.xz, playerBox);
+        if (objs.length == 0) return;
+
+        const hit = objs[0];
+        const dx = Math.abs(hit.pos.x - player.pos.x);
+        const dz = Math.abs(hit.pos.z - player.pos.z);
+
+        player.kill(dx > dz, hit.xVel ?? 0);
+    });
 }
 
 // determines the intersecting objects at the given position of the given bounding box.
-export function objectsIntersecting(pos: Vec, box: [Vec, Vec]) {
-    const zCenter = Math.trunc(pos.y);
-    pos = pos.mul(20); // real world coordinates
-    let objects = [];
+export function objectsIntersecting(pos: Vec,
+                                    box: [Vec, Vec],
+                                    filterFor: (tile: Tile) => boolean = () => true) {
 
-    // currently searching +/- 1 lane of pos.z
-    for (let z = -1; z <= 1; z++) {
-        const lane = lanes[zCenter + z];
-        if (!lane) continue;
+    let objects: Tile[] = [];
+    // check the 2 lanes closest to the player
+    const zCenter = Math.trunc(pos.y);
+    const zOff = pos.y > zCenter ? 1 : -1;
+
+    pos = pos.mul(20); // real world coordinates
+
+    const scanLane = (z: number) => {
+        const lane = lanes[z];
+        if (!lane) return;
 
         for (const tile of lane) {
-            if (tile.type != 'car') continue;
+            if (!filterFor(tile)) continue;
 
             const tileBox = tile.obj.boundingRect;
             const tilePos = tile.pos.xz.mul(20);
@@ -81,11 +107,14 @@ export function objectsIntersecting(pos: Vec, box: [Vec, Vec]) {
         }
     }
 
+    scanLane(zCenter);
+    scanLane(zCenter + zOff);
+
     return objects;
 }
 
 export function carsIntersecting(pos: Vec, box: [Vec, Vec]) {
-    return objectsIntersecting(pos, box).filter(tile => tile.type == 'car');
+    return objectsIntersecting(pos, box, tile => tile.type == 'car')
 }
 
 // called every frame to update objects with velocity
@@ -147,8 +176,6 @@ function updateDisplay() {
         }
     }
 
-    const roadHeight = .72;
-    const safeHeight = 2.6;
     const offsets = lanes.map((_, z) =>
         isGrass(z) ? safeHeight : roadHeight
     );
@@ -172,41 +199,41 @@ export function addBoulevard(type: 'safe' | 'road', width: number) {
         case 'safe':
             for (let j = 0; j < width; j++) {
                 let obj = (j % 2 == 1) ? models.safe : models.safe2;
-                lanes.push([{ type: 'safe', obj, pos: new Vec(x) }]);
+                lanes.push([{type: 'safe', obj, pos: new Vec(x)}]);
             }
             break;
         case 'road':
             if (width == 1) {
-                lanes.push([{ type: 'road', obj: models.road, pos: new Vec(x) }]);
+                lanes.push([{type: 'road', obj: models.road, pos: new Vec(x)}]);
             } else {
-                lanes.push([{ type: 'road', obj: models.roadCap2, pos: new Vec(x) }]);
+                lanes.push([{type: 'road', obj: models.roadCap2, pos: new Vec(x)}]);
                 for (let j = 0; j < width - 2; j++) {
-                    lanes.push([{ type: 'road', obj: models.roadStripe, pos: new Vec(x) }]);
+                    lanes.push([{type: 'road', obj: models.roadStripe, pos: new Vec(x)}]);
                 }
-                lanes.push([{ type: 'road', obj: models.roadCap, pos: new Vec(x) }]);
+                lanes.push([{type: 'road', obj: models.roadCap, pos: new Vec(x)}]);
             }
             break;
     }
 }
 
 export function addTrain(z: number) {
-    lanes[z].push({ type: 'train', obj: models.track, pos: new Vec(18.5) });
-    lanes[z].push({ type: 'train', obj: models.trackPost, pos: new Vec(5) });
+    lanes[z].push({type: 'train', obj: models.track, pos: new Vec(18.5)});
+    lanes[z].push({type: 'train', obj: models.trackPost, pos: new Vec(5)});
 }
 
 export function addObstacle(x: number, z: number, orientation?: number, variant?: number) {
     orientation ??= Math.floor(Math.random() * 4);
     // todo rock variants
-    lanes[z].push({ type: 'obstacle', obj: models.rock, pos: new Vec(x), orientation });
+    lanes[z].push({type: 'obstacle', obj: models.rock, pos: new Vec(x), orientation});
 }
 
 export function addTree(x: number, z: number, height: number) {
     let tree = [
-        { type: 'obstacle', obj: models.treeBase, pos: new Vec(x)} as Tile,
+        {type: 'obstacle', obj: models.treeBase, pos: new Vec(x)} as Tile,
     ];
 
     for (let i = 0; i < height; i++) {
-        tree.push({ type: 'obstacle', obj: models.treeTop, pos: new Vec(x, .4 * i) });
+        tree.push({type: 'obstacle', obj: models.treeTop, pos: new Vec(x, .4 * i)});
     }
 
     // ordering in the lane is not important

@@ -1,9 +1,11 @@
 import * as input from "../input";
-import { lerp } from "../animation";
+import {lerp} from "../animation";
 import {BoundingBox, Vec} from "$lib/webGL/linear_algebra";
-import {Event} from "$lib/webGL/utils";
-import {carsIntersecting, isObstacle, objectsIntersecting} from "$lib/webGL/scene/state/state";
+import {Event, Store} from "$lib/webGL/utils";
+import {carsIntersecting, isObstacle, objectsIntersecting, score} from "$lib/webGL/scene/state/state";
 import {models} from "$lib/webGL/resources";
+import {events} from "$lib/webGL/glManager";
+import * as camera from "$lib/webGL/scene/camera";
 
 // todo consider a late update function to--
 // increment the animations in-between frames
@@ -23,20 +25,24 @@ const dxdt = 1 / jumpDuration;
 
 export let pos = new Vec(7, 0, 0); // initial position
 export let orient = 0;
-export let stretch = 1;
+export let stretch = Vec.zero(3).add(1);
 export const onMove = new Event<() => void>();
+
+export const alive = new Store(true);
 
 let t = 0;
 let posTarget = pos.clone();
 let stretchTargets: number[] = [];
 let targetOrient = 0;
+let drift = 0; // used when the player is killed by a vehicle
 
 export function init() {
     const onUp = (dir: [number, number], newOrient: number) => () => {
+        if (!alive.get()) return;
         if (t != 0) return;
 
         targetOrient = newOrient;
-        stretchTargets = [1 + stretchRange,  1];
+        stretchTargets = [1 + stretchRange, 1];
 
         {
             const x = Math.trunc(pos.x) + dir[0];
@@ -47,11 +53,9 @@ export function init() {
         t = -jumpDuration;
         posTarget.x += dir[0];
         posTarget.z += dir[1];
-        onMove.fire();
 
-        const playerBox = models.player.boundingRect;
-        const objs = carsIntersecting(pos.xz, playerBox);
-        console.log('objs', objs);
+        camera.caffeinate();
+        onMove.fire();
     };
 
     input.up.add('forward', onUp([0, 1], 0));
@@ -60,6 +64,7 @@ export function init() {
     input.up.add('right', onUp([1, 0], 3));
 
     const onDown = () => {
+        if (!alive.get()) return;
         if (t != 0) return;
         stretchTargets = [1 - stretchRange];
     }
@@ -68,14 +73,25 @@ export function init() {
     input.down.add('backward', onDown);
     input.down.add('left', onDown);
     input.down.add('right', onDown);
+
+    events.frame.add(update);
 }
 
-export function update(dt: number) {
+
+function update(dt: number) {
+    if (!alive.get()) {
+        pos.x += drift * dt;
+        return;
+    }
+
     if (stretchTargets.length != 0) {
-        if (Math.abs(stretch - stretchTargets[0]) < .01) {
+        if (Math.abs(stretch.y - stretchTargets[0]) < .01) {
             stretchTargets.shift();
         } else {
-            stretch = lerp(stretch, stretchTargets[0], stretchSpeed * dt);
+            stretch.y = lerp(stretch.y, stretchTargets[0], stretchSpeed * dt);
+            const fat = (4 - stretch.y) / 3;
+            stretch.x = fat;
+            stretch.z = fat;
         }
     }
 
@@ -105,6 +121,8 @@ export function update(dt: number) {
 }
 
 function move(dt: number) {
+    if (!alive.get()) return;
+
     // quadratic vertical movement
     const dy = -gravity * t - jumpVelocity;
     pos.y += dy * dt;
@@ -113,4 +131,29 @@ function move(dt: number) {
     const dx = dxdt * dt;
     if (pos.x != posTarget.x) pos.x += dx * Math.sign(posTarget.x - pos.x);
     if (pos.z != posTarget.z) pos.z += dx * Math.sign(posTarget.z - pos.z);
+
+    const newScore = Math.round(pos.z);
+    if (newScore > score.get()) {
+        score.set(newScore);
+    }
+}
+
+// used when the player is killed by a vehicle.
+// flatten the player on the given axis
+export function kill(onX: boolean, newVelocity: number) {
+    orient = Math.trunc(orient);
+
+    stretch = Vec.zero(3).add(1.17);
+    if (onX) {
+        stretch.x = 0.1;
+    } else {
+        stretch.z = 0.1;
+    }
+
+    stretchTargets = [];
+    targetOrient = orient;
+    posTarget = pos.clone();
+
+    drift = newVelocity;
+    alive.set(false);
 }

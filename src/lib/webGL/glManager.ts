@@ -11,7 +11,8 @@ export let gl: WebGLRenderingContext;
 export const events = {
     resize: new Event<(w: number, h: number) => void>(),
     // deltaTime in ms
-    render: new Event<(deltaTime: number) => void>()
+    frame: new Event<(deltaTime: number) => void>(),
+    lateFrame: new Event<(deltaTime: number) => void>(),
 }
 
 export let shaders: Map<string, Shader>;
@@ -56,7 +57,7 @@ export async function init(canvas: HTMLCanvasElement) {
     gl.enable(gl.CULL_FACE); // Cull triangles which normal is not towards the camera
     gl.cullFace(gl.BACK); // Cull back faces
 
-    events.render.add((dt) => {
+    events.frame.add((dt) => {
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     });
 
@@ -103,7 +104,9 @@ export function startRendering() {
         const deltaTime = now - then;
         then = now;
 
-        events.render.fire(deltaTime/1000);
+        const dt = deltaTime/1000;
+        events.frame.fire(dt);
+        events.lateFrame.fire(dt);
         requestAnimationFrame(doFrame);
     }
 

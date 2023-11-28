@@ -16,7 +16,7 @@ export async function init() {
     obj.bind();
 
     let rotation = 0;
-    events.render.add((dt) => {
+    events.frame.add((dt) => {
         rotation += dt;
 
         let modelViewMatrix = mat4.create();

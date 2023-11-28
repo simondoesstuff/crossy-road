@@ -18,7 +18,6 @@ const lowp float rightBoundary = 100.0;
 
 void main(void) {
     gl_Position = u_projectionMatrix * u_modelViewMatrix * a_position;
-    gl_Position.y += sin(gl_Position.x * 4.0 + (gl_Position.z * 10.0)) * 0.2;
 
     highp vec4 normal = u_normalMatrix * a_normal;
     highp vec4 lightDir = u_directionalLightDir;

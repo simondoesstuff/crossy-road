@@ -1,11 +1,11 @@
 import {models, Object3D} from "$lib/webGL/resources";
 import {events, gl, shader, updateModelViewMatrix, updateNormalMatrix} from "$lib/webGL/glManager";
-import * as player from "$lib/webGL/scene/player";
 import * as camera from "$lib/webGL/scene/camera";
 import {mat4} from "gl-matrix";
 import type {Tile} from "$lib/webGL/scene/state/state";
 import {Vec} from "$lib/webGL/linear_algebra";
-
+import * as player from "$lib/webGL/scene/player";
+import {init as cameraInit} from "$lib/webGL/scene/camera";
 
 const tileWidth = 20;
 const tileHeight = .72; // refers to ground tiles
@@ -18,11 +18,10 @@ export async function init() {
     gl.uniform4fv(shader.uniform.directionalLightColor, [1, 1, 1, 1]);
     gl.uniform4fv(shader.uniform.ambientLightColor, [.8, .8, .8, 1]);
 
-    player.init();
-    player.onMove.add(() => camera.caffinate());
+    cameraInit();
 
     let rot = 0;
-    events.render.add((dt) => {
+    events.frame.add((dt) => {
         rot += dt * 90;
 
         {
@@ -44,9 +43,6 @@ export async function init() {
 
             gl.uniform4fv(shader.uniform.directionalLightDir, [...dir.data, 0]);
         }
-
-        player.update(dt);
-        camera.update(dt, player.pos);
 
         const rootMatrix = mat4.create();
         mat4.rotateX(rootMatrix, rootMatrix, Math.PI / 4);
@@ -88,9 +84,8 @@ export async function init() {
             const y = player.pos.y * tileWidth + yOffset;
 
             mat4.translate(playerMatrix, playerMatrix, [x, y, z]);
+            mat4.scale(playerMatrix, playerMatrix, player.stretch.data as [number, number, number]);
             mat4.rotateY(playerMatrix, playerMatrix, Math.PI/2 * player.orient);
-            const fatStretch = (4 - player.stretch) / 3;
-            mat4.scale(playerMatrix, playerMatrix, [fatStretch, player.stretch, fatStretch]);
 
             updateModelViewMatrix(playerMatrix);
             updateNormalMatrix();
