@@ -4,8 +4,8 @@ import {PLYLoader} from "@loaders.gl/ply";
 import {load} from "@loaders.gl/core";
 import type {PLYMesh} from "@loaders.gl/ply/dist/lib/ply-types";
 import {gl, shader as glShader} from "$lib/webGL/glManager";
-import {BoundingBox} from "$lib/webGL/linear_algebra";
-import {Vec} from "$lib/webGL/linear_algebra";
+import {BoundingBox} from "$lib/webGL/math/linear_algebra";
+import {Vec} from "$lib/webGL/math/linear_algebra";
 
 /// Note, only supports ply files.
 export class Object3D {
@@ -20,7 +20,9 @@ export class Object3D {
     public readonly boundingBox: [Vec, Vec]
     public readonly boundingRect: [Vec, Vec];
 
-    public constructor(mesh: PLYMesh) {
+    public readonly name?: string; // primarily for debugging purposes
+
+    public constructor(mesh: PLYMesh, name?: string) {
         this.mesh = mesh;
         if (!mesh.indices) throw new Error("No indices found in mesh.");
         this.count = mesh.indices.value.length;
@@ -30,6 +32,8 @@ export class Object3D {
         const a = this.boundingBox[0].xz;
         const b = this.boundingBox[1].xz;
         this.boundingRect = [a, b];
+
+        this.name = name;
     }
 
     private measureBounds(): [Vec, Vec] {
@@ -48,8 +52,8 @@ export class Object3D {
         return [new Vec(...min), new Vec(...max)];
     }
 
-    public static async fromPath(path: string) {
-        return new Object3D(await load(path, PLYLoader));
+    public static async fromPath(path: string, name?: string) {
+        return new Object3D(await load(path, PLYLoader), name);
     }
 
     public bind() {
@@ -159,7 +163,7 @@ async function loadModels(pack: string) {
 
     for (const model of keys) {
         // @ts-ignore
-        models[model] = await Object3D.fromPath(prefix + model + '.ply');
+        models[model] = await Object3D.fromPath(prefix + model + '.ply', model);
     }
 }
 
