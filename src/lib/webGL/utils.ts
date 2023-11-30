@@ -59,5 +59,6 @@ export class Store<T> {
 }
 
 export async function importFile(path: string) {
-    return (await import(path + '?raw')).default;
+    const resp = await fetch(path);
+    return await resp.text();
 }

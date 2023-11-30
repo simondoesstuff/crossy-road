@@ -44,8 +44,8 @@ export async function initShaders(): Promise<Map<string, Shader>> {
 
 // loads a shader from file and compiles it
 async function compileShader(prefix: string): Promise<Shader> {
-    const vertPath = `./shaders/${prefix}.vert`;
-    const fragPath = `./shaders/${prefix}.frag`;
+    const vertPath = `/shaders/${prefix}.vert`;
+    const fragPath = `/shaders/${prefix}.frag`;
 
     // load from file using path vsSource and fsSource
     const vsSource = await importFile(vertPath);
