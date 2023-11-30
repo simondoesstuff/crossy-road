@@ -23,7 +23,7 @@ const spinSpeed = 2.5 / jumpDuration;
 const gravity = 2 * jumpVelocity / jumpDuration;
 const dxdt = 1 / jumpDuration;
 
-export let pos = new Vec(10, 0, 0); // initial position
+export let pos = new Vec(10, 0, 5); // initial position
 export let orient = 0;
 export let stretch = Vec.zero(3).add(1);
 export const onMove = new Event<() => void>();

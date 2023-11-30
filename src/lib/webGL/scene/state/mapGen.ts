@@ -18,7 +18,7 @@ import {
 } from "$lib/webGL/scene/state/tileState";
 
 type biome = "grass" | "water" | "road"
-const laneBuffer = 1; // how many lanes should be buffered before the player reaches the end
+const laneBuffer = 20; // how many lanes should be buffered before the player reaches the end
 const thickRegion = 6; // the width of padding around lane edges of thick obstacle coverage
 const trainProb = .05; // todo implement trains
 const biomeStats = {
@@ -70,8 +70,8 @@ export function init() {
         updateDisplay();
     }
 
-    buildGrassBiome(2); // initial safe zone
-    tryExpand(); // add initial chunks
+    buildGrassBiome(8); // initial safe zone
+    tryExpand();
 
     // as the player moves, the chunks will be added to the end of the map
     score.listen((s) => {
