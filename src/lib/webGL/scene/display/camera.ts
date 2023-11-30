@@ -1,11 +1,14 @@
-import {Vec} from "$lib/webGL/linear_algebra";
+import {Vec} from "$lib/webGL/math/linear_algebra";
 import {lerpVec} from "$lib/webGL/animation";
 import {events} from "$lib/webGL/glManager";
-import {alive, pos as playerPos} from "$lib/webGL/scene/player";
+import {alive, pos as playerPos} from "$lib/webGL/scene/state/player";
 
 
-// the camera "tries" to center around the player, lerps towards
-// when it's still, it starts "falling" behind on the z axis
+// the camera "tries" to center around the player, lerps towards.
+// when it's still, it starts "falling" behind on the z axis.
+// when the player is dead, it will follow for a short time, then give up.
+// the camera does not get "bored" when the player has been dead, it will
+// just remain at a roughly fixed position (disregarding momentum).
 
 export let pos = new Vec(7, 0, 0);
 const lerpSpeed = 3;

@@ -4,7 +4,7 @@
 // v_initial = -1/2 a (jump_duration)
 
 // lerp is an ease out function
-import type {Vec} from "$lib/webGL/linear_algebra";
+import type {Vec} from "$lib/webGL/math/linear_algebra";
 
 export const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
 

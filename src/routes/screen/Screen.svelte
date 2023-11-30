@@ -2,7 +2,7 @@
     import * as glManager from "$lib/webGL/glManager";
     import * as crossyScene from "$lib/webGL/scene/crossyRoadScene";
     import {onMount} from "svelte";
-    import {score as scoreStore} from "$lib/webGL/scene/state/state";
+    import {score as scoreStore} from "$lib/webGL/scene/state/tileState";
 
     let canvas: HTMLCanvasElement;
     let score: number = 0;

@@ -1,13 +1,29 @@
 import type {Object3D} from "$lib/webGL/resources";
-import {BoundingBox, Vec} from "$lib/webGL/linear_algebra";
+import {BoundingBox, Vec} from "$lib/webGL/math/linear_algebra";
 import {models} from "$lib/webGL/resources";
-import * as display from "$lib/webGL/scene/display";
+import * as display from "$lib/webGL/scene/display/display";
 import {events as glEvents} from "$lib/webGL/glManager";
-import * as player from "$lib/webGL/scene/player";
+import * as player from "$lib/webGL/scene/state/player";
 import {Store} from "$lib/webGL/utils";
+import {init as mapGenInit} from "$lib/webGL/scene/state/mapGen";
 
 
-const xBounds = [0, 19]; // objects that leave the bounds are removed
+/*
+    This module manages things like:
+
+    Where are the objects? What are their speeds?
+    For a lane, what is the type of biome? What intersects an object?
+    High level state, independent of rendering.
+
+    Per frame, it manages these states including moving objects with velocity
+    and commanding the display module to reflect the results. This module is
+    tightly coupled with the player module which manages similar high level
+    state about the player (and nothing to do with the rendering of the player).
+ */
+
+
+export const xBounds = [0, 20]; // objects that leave the bounds are removed
+
 const roadHeight = .72;
 const safeHeight = 2.6;
 
@@ -32,32 +48,7 @@ let lanes: Tile[][] = [];
 export async function init() {
     let dispInit = display.init(); // promise captured for concurrent initialization
     player.init();
-
-    addBoulevard('safe', 1);
-    addBoulevard('road', 3);
-    addBoulevard('safe', 3);
-    addBoulevard('road', 2);
-    addBoulevard('safe', 1);
-    addBoulevard('road', 1);
-    addBoulevard('safe', 2);
-
-    addTree(0, 4, 2);
-    addTree(0, 5, 3);
-    addTree(2, 5, 2);
-    addTree(15, 4, 1);
-    addTree(15, 5, 1);
-    addTree(14, 6, 2);
-    addTree(7, 5, 4);
-
-    addObstacle(1, 4);
-    addObstacle(5, 5);
-    addObstacle(11, 0);
-    addObstacle(14, 9);
-
-    addTrain(6);
-    addTrain(3);
-
-    lanes[3].push({type: 'car', obj: models.rock, pos: new Vec(5), orientation: 1, xVel: 2});
+    mapGenInit();
 
     await dispInit;
     updateDisplay();
@@ -77,6 +68,19 @@ export async function init() {
 
         player.kill(dx > dz, hit.xVel ?? 0);
     });
+}
+
+export function laneCount() {
+    return lanes.length;
+}
+
+// Considers an existing lane "retired"-- it will no longer be updated or rendered.
+// Players should not be allowed to get near a retired lane. This is to expose
+// redundant objects for garbage collection.
+export function retireLane(z: number) {
+    // note that lanes array is not spliced because the indices are important
+    // and this avoids some array shifting.
+    lanes[z] = [];
 }
 
 // determines the intersecting objects at the given position of the given bounding box.
@@ -158,12 +162,13 @@ export function isObstacle(x: number, z: number) {
 
 export function isGrass(z: number) {
     // 0th element of the lane is always the boulevard
+    if (lanes[z].length == 0) return false;
     return lanes[z][0].type == 'safe';
 }
 
 // information can reach display via reference, call this when
 // new objects are added so they can be properly grouped on the display module
-function updateDisplay() {
+export function updateDisplay() {
     for (let z = 0; z < lanes.length; z++) {
         const lane = lanes[z];
         for (const tile of lane) {
@@ -194,11 +199,20 @@ function updateDisplay() {
 }
 
 export function addBoulevard(type: 'safe' | 'road', width: number) {
-    const x = 19;
+    const x = 19; // only used for rendering purposes
     switch (type) {
         case 'safe':
+            // alt ensures that back to back safe tiles will not be of the same color
+            let alt = 1;
+            if (lanes.length != 0) {
+                const lane = lanes[lanes.length - 1];
+                if (lane.length != 0 && lane[0].obj == models.safe2) {
+                    alt = 0;
+                }
+            }
+
             for (let j = 0; j < width; j++) {
-                let obj = (j % 2 == 1) ? models.safe : models.safe2;
+                let obj = (j % 2 == alt) ? models.safe : models.safe2;
                 lanes.push([{type: 'safe', obj, pos: new Vec(x)}]);
             }
             break;
@@ -221,7 +235,7 @@ export function addTrain(z: number) {
     lanes[z].push({type: 'train', obj: models.trackPost, pos: new Vec(5)});
 }
 
-export function addObstacle(x: number, z: number, orientation?: number, variant?: number) {
+export function addRock(x: number, z: number, orientation?: number, variant?: number) {
     orientation ??= Math.floor(Math.random() * 4);
     // todo rock variants
     lanes[z].push({type: 'obstacle', obj: models.rock, pos: new Vec(x), orientation});

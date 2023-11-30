@@ -14,6 +14,9 @@ export class Event<T extends Function> {
     }
 }
 
+// A Store is a special case of an event. It represents an object that stores a single
+// value of which subscribers can "listen" for changes to it. All changes to the value
+// are controlled by the Store so that the Store can reliably alert its subscribers.
 export class Store<T> {
     private value: T;
     private readonly listeners: Event<(value: T) => void> = new Event();

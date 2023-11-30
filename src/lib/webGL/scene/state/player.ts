@@ -1,11 +1,11 @@
-import * as input from "../input";
-import {lerp} from "../animation";
-import {BoundingBox, Vec} from "$lib/webGL/linear_algebra";
+import * as input from "../../input";
+import {lerp} from "../../animation";
+import {BoundingBox, Vec} from "$lib/webGL/math/linear_algebra";
 import {Event, Store} from "$lib/webGL/utils";
-import {carsIntersecting, isObstacle, objectsIntersecting, score} from "$lib/webGL/scene/state/state";
+import {carsIntersecting, isObstacle, objectsIntersecting, score} from "$lib/webGL/scene/state/tileState";
 import {models} from "$lib/webGL/resources";
 import {events} from "$lib/webGL/glManager";
-import * as camera from "$lib/webGL/scene/camera";
+import * as camera from "$lib/webGL/scene/display/camera";
 
 // todo consider a late update function to--
 // increment the animations in-between frames
@@ -23,7 +23,7 @@ const spinSpeed = 2.5 / jumpDuration;
 const gravity = 2 * jumpVelocity / jumpDuration;
 const dxdt = 1 / jumpDuration;
 
-export let pos = new Vec(7, 0, 0); // initial position
+export let pos = new Vec(10, 0, 0); // initial position
 export let orient = 0;
 export let stretch = Vec.zero(3).add(1);
 export const onMove = new Event<() => void>();
