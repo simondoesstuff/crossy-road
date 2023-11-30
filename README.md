@@ -15,6 +15,7 @@ This demonstrates the rudimentary procedural generation
 at https://crossy.simonwalker.tech  
 or to run the development server locally, clone the repo and run
 ```bash
+nom install
 npm run dev
 ```
 Note, the (vercel) site will reflect all the latest changes to this
