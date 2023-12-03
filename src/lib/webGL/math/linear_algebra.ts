@@ -113,30 +113,93 @@ export class Vec {
         return new Float32Array(this.data);
     }
 
-    get x() { return this.data[0]; }
-    get y() { return this.data[1]; }
-    get z() { return this.data[2]; }
-    set x(x: number) { this.data[0] = x; }
-    set y(y: number) { this.data[1] = y; }
-    set z(z: number) { this.data[2] = z; }
+    get x() {
+        return this.data[0];
+    }
 
-    get xy() { return new Vec(this.x, this.y); }
-    get xz() { return new Vec(this.x, this.z); }
-    get yz() { return new Vec(this.y, this.z); }
+    get y() {
+        return this.data[1];
+    }
+
+    get z() {
+        return this.data[2];
+    }
+
+    set x(x: number) {
+        this.data[0] = x;
+    }
+
+    set y(y: number) {
+        this.data[1] = y;
+    }
+
+    set z(z: number) {
+        this.data[2] = z;
+    }
+
+    get xy() {
+        return new Vec(this.x, this.y);
+    }
+
+    get xz() {
+        return new Vec(this.x, this.z);
+    }
+
+    get yz() {
+        return new Vec(this.y, this.z);
+    }
+
+    setX(x: number) {
+        return new Vec(x, this.y, this.z);
+    }
+
+    setY(y: number) {
+        return new Vec(this.x, y, this.z);
+    }
+
+    setZ(z: number) {
+        return new Vec(this.x, this.y, z);
+    }
 }
 
 export const BoundingBox = {
     intersect: (a: Vec, b: Vec, c: Vec, d: Vec) => {
-        for (let dim = 0; dim < a.n; dim++) {
+        const n = a.n;
+        const deltas = new Array(n);
+
+        for (let dim = 0; dim < n; dim++) {
             const ai = a.data[dim];
             const bi = b.data[dim];
             const ci = c.data[dim];
             const di = d.data[dim];
 
-            if (ai > di || ci > bi) return false;
+            // the order of the points may not be consistent, so we need to sort them
+            const aMin = Math.min(ai, bi);
+            const aMax = aMin === ai ? bi : ai;
+
+            const bMin = Math.min(ci, di);
+            const bMax = bMin === ci ? di : ci;
+
+            const leftDelta = bMin - aMax;
+            const rightDelta = aMin - bMax;
+
+            if (leftDelta > 0 || rightDelta > 0) {
+                return false;
+            } else {
+                const leftMag = Math.abs(leftDelta);
+                const rightMag = Math.abs(rightDelta);
+
+                if (leftMag < rightMag) {
+                    // left orientation is best
+                    deltas[dim] = leftDelta;
+                } else {
+                    // right orientation is best
+                    deltas[dim] = -rightDelta;
+                }
+            }
         }
 
-        return true;
+        return deltas;
     },
 
     // intersect, shifting both boxes by the same amount

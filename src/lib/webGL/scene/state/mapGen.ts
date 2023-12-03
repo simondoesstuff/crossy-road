@@ -7,7 +7,7 @@
 
 import {bernoulli, choice, normalNice, uniform} from "$lib/webGL/math/statistics";
 import {
-    addBoulevard,
+    addBoulevard, addCar,
     addRock,
     addTree,
     laneCount,
@@ -39,10 +39,11 @@ const biomeStats = {
     road: {
         chance: 50,
         width: {
-            mean: 2,
-            sigma: 2
+            mean: 1,
+            sigma: 0
         }
     }
+    // add waterSafe, waterRoad
 }
 const obstacleStats = {
     any: .4, // chance of any obstacle
@@ -160,4 +161,8 @@ function addObstacle(x: number, z: number) {
 function buildRoadBiome(width: number) {
     prevBiome = "road";
     addBoulevard("road", width);
+    // todo experimental
+    for (let z = laneCount() - width; z < laneCount(); z++) {
+        addCar(13, z, normalNice(0, 2), 2);
+    }
 }

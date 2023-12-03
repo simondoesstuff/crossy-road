@@ -10,7 +10,7 @@ import {alive, pos as playerPos} from "$lib/webGL/scene/state/player";
 // the camera does not get "bored" when the player has been dead, it will
 // just remain at a roughly fixed position (disregarding momentum).
 
-export let pos = new Vec(7, 0, 0);
+export let pos = new Vec(10, 0, 4);
 const lerpSpeed = 3;
 const boredTime = 5;
 const boredSpeed = 1;

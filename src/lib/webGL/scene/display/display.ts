@@ -12,6 +12,7 @@ const tileHeight = .72; // refers to ground tiles
 
 let tiles: Map<Object3D, Tile[]>;
 let offsets: number[];
+let playerMvMatrix: mat4;
 
 export async function init() {
     gl.clearColor(0, 0, 0.1, 1.0);
@@ -70,6 +71,7 @@ export async function init() {
                 mat4.rotateY(tileMatrix, tileMatrix, Math.PI/2 * (tile.orientation ?? 0));
                 if (tile.type == 'safe') mat4.scale(tileMatrix, tileMatrix, [1, 3, 1]);
 
+                tile.mvMatrix = tileMatrix;
                 updateModelViewMatrix(tileMatrix);
                 updateNormalMatrix();
                 object.draw();
@@ -90,6 +92,7 @@ export async function init() {
             mat4.scale(playerMatrix, playerMatrix, player.stretch.data as [number, number, number]);
             mat4.rotateY(playerMatrix, playerMatrix, Math.PI/2 * player.orient);
 
+            playerMvMatrix = playerMatrix;
             updateModelViewMatrix(playerMatrix);
             updateNormalMatrix();
             models.player.bind();
@@ -98,6 +101,10 @@ export async function init() {
 
         updateModelViewMatrix(rootMatrix);
     });
+}
+
+export function getPlayerMvMatrix () {
+    return playerMvMatrix;
 }
 
 export function updateTiles(newTiles: Generator<Tile>, newOffsets: number[]) {

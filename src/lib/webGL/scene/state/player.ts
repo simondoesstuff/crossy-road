@@ -2,7 +2,7 @@ import * as input from "../../input";
 import {lerp} from "../../animation";
 import {BoundingBox, Vec} from "$lib/webGL/math/linear_algebra";
 import {Event, Store} from "$lib/webGL/utils";
-import {carsIntersecting, isObstacle, objectsIntersecting, score} from "$lib/webGL/scene/state/tileState";
+import {isObstacle, score} from "$lib/webGL/scene/state/tileState";
 import {models} from "$lib/webGL/resources";
 import {events} from "$lib/webGL/glManager";
 import * as camera from "$lib/webGL/scene/display/camera";
@@ -22,6 +22,7 @@ const spinSpeed = 2.5 / jumpDuration;
 
 const gravity = 2 * jumpVelocity / jumpDuration;
 const dxdt = 1 / jumpDuration;
+const modelRadius = .4;
 
 export let pos = new Vec(10, 0, 5); // initial position
 export let orient = 0;
@@ -140,14 +141,27 @@ function move(dt: number) {
 
 // used when the player is killed by a vehicle.
 // flatten the player on the given axis
-export function kill(onX: boolean, newVelocity: number) {
-    orient = Math.trunc(orient);
+export function kill(intersectDelta: [number, number], newVelocity: number) {
+    orient = Math.round(orient) % 4;
+    const onX = Math.abs(intersectDelta[0]) < Math.abs(intersectDelta[1]);
+
+    console.log('deltas', intersectDelta)
 
     stretch = Vec.zero(3).add(1.17);
     if (onX) {
+        console.log("intersect on x")
+        // 1. move to the edge of the intersection
+        // 2. squash along intersection axis
+        pos.x += intersectDelta[0] / 20;
+        // todo remove the modelRadius correction factor by improving the collision detection
+        pos.x += modelRadius / 3 * -Math.sign(intersectDelta[0]);
+        // (x/20) to convert to tile units
         stretch.x = 0.1;
     } else {
-        stretch.z = 0.1;
+        console.log("intersect on z")
+        pos.z -= intersectDelta[1] / 20; // z is negated due to camera orientation
+        pos.z -= modelRadius * -Math.sign(intersectDelta[1]);
+        stretch.z = 0.1
     }
 
     stretchTargets = [];

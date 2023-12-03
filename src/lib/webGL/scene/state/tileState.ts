@@ -6,6 +6,8 @@ import {events as glEvents} from "$lib/webGL/glManager";
 import * as player from "$lib/webGL/scene/state/player";
 import {Store} from "$lib/webGL/utils";
 import {init as mapGenInit} from "$lib/webGL/scene/state/mapGen";
+import type {mat4} from "gl-matrix";
+import {vec2, vec3} from "gl-matrix";
 
 
 /*
@@ -24,7 +26,7 @@ import {init as mapGenInit} from "$lib/webGL/scene/state/mapGen";
 
 export const xBounds = [0, 20]; // objects that leave the bounds are removed
 
-const roadHeight = .72;
+const roadHeight = .72 + .6;
 const safeHeight = 2.6;
 
 export const score = new Store(0);
@@ -33,6 +35,7 @@ export interface Tile {
     type: 'safe' | 'road' | 'obstacle' | 'train' | 'log' | 'car',
     obj: Object3D,
     pos: Vec,
+    mvMatrix?: mat4, // calculated for rendering, reused for collision detection
     xVel?: number,
     dontShift?: boolean // only used to differentiate ground tiles
     orientation?: number,
@@ -59,14 +62,12 @@ export async function init() {
         if (!player.alive.get()) return;
 
         const playerBox = models.player.boundingRect;
-        const objs = carsIntersecting(player.pos.xz, playerBox);
+        const objs = carsIntersecting();
         if (objs.length == 0) return;
 
         const hit = objs[0];
-        const dx = Math.abs(hit.pos.x - player.pos.x);
-        const dz = Math.abs(hit.pos.z - player.pos.z);
-
-        player.kill(dx > dz, hit.xVel ?? 0);
+        const vel = hit.tile.xVel ?? 0;
+        player.kill(hit.delta, vel);
     });
 }
 
@@ -84,16 +85,29 @@ export function retireLane(z: number) {
 }
 
 // determines the intersecting objects at the given position of the given bounding box.
-export function objectsIntersecting(pos: Vec,
-                                    box: [Vec, Vec],
-                                    filterFor: (tile: Tile) => boolean = () => true) {
+export function playerIntersections(filterFor: (tile: Tile) => boolean = () => true) {
+    // utility function to apply a matrix transformation(s) to a bounding box
+    const transformVec = (vec: Vec, matrix: mat4) => {
+        // the input vectors are in the XZ (horizontal) plane, but the matrix is in XYZ(W)
+        const v3 = vec3.fromValues(vec.x, 0, vec.y); // convert to vec3
+        const vt = vec3.transformMat4(vec3.create(), v3, matrix); // apply transformation
+        return new Vec(vt[0], vt[2]);
+    }
 
-    let objects: Tile[] = [];
-    // check the 2 lanes closest to the player
-    const zCenter = Math.trunc(pos.y);
-    const zOff = pos.y > zCenter ? 1 : -1;
+    // similarly, for a box
+    const transformBox = (box: [Vec, Vec], matrix: mat4) => {
+        return [
+            transformVec(box[0], matrix),
+            transformVec(box[1], matrix)
+        ];
+    }
 
-    pos = pos.mul(20); // real world coordinates
+    type hit = {tile: Tile, delta: [number, number]};
+    let objects: hit[] = [];
+
+    const playerMatrix = display.getPlayerMvMatrix();
+    const playerBox = models.player.boundingRect;
+    const playerBox_t = transformBox(playerBox, playerMatrix);
 
     const scanLane = (z: number) => {
         const lane = lanes[z];
@@ -101,24 +115,46 @@ export function objectsIntersecting(pos: Vec,
 
         for (const tile of lane) {
             if (!filterFor(tile)) continue;
+            const matrix = tile.mvMatrix;
+            if (!matrix) break; // can't compute intersections until at least one frame has passed
 
             const tileBox = tile.obj.boundingRect;
-            const tilePos = tile.pos.xz.mul(20);
+            const tileBox_t = transformBox(tileBox, matrix);
 
-            if (BoundingBox.intersectAt(pos, ...box, tilePos, ...tileBox)) {
-                objects.push(tile);
+            const m = (x) => [Math.round(x[0]*10)/10, -Math.round(x[1]*10)/10];
+            const p1 = m(playerBox_t[0].data);
+            const p2 = m(playerBox_t[1].data);
+            const t1 = m(tileBox_t[0].data);
+            const t2 = m(tileBox_t[1].data);
+            console.log(`(${p1}), (${t1})\n(${p2}), (${t2})`)
+
+            const intersectDelta = BoundingBox.intersect(playerBox_t[0], playerBox_t[1], tileBox_t[0], tileBox_t[1]);
+            if (intersectDelta) {
+                objects.push({
+                    tile,
+                    delta: intersectDelta as [number, number]
+                });
             }
         }
     }
 
+    const zCenter = Math.trunc(player.pos.z);
     scanLane(zCenter);
+
+    if (player.pos.z == zCenter) {
+        // since the player is perfectly centered, we only need to check the lane they're in
+        return objects;
+    }
+
+    // additionally scan the next closest lane
+    const zOff = player.pos.z > zCenter ? 1 : -1;
     scanLane(zCenter + zOff);
 
     return objects;
 }
 
-export function carsIntersecting(pos: Vec, box: [Vec, Vec]) {
-    return objectsIntersecting(pos, box, tile => tile.type == 'car')
+export function carsIntersecting() {
+    return playerIntersections(tile => tile.type == 'car')
 }
 
 // called every frame to update objects with velocity
@@ -233,6 +269,14 @@ export function addBoulevard(type: 'safe' | 'road', width: number) {
 export function addTrain(z: number) {
     lanes[z].push({type: 'train', obj: models.track, pos: new Vec(18.5)});
     lanes[z].push({type: 'train', obj: models.trackPost, pos: new Vec(5)});
+}
+
+export function addCar(x: number, z: number, speed?: number, orientation?: number, variant?: number) {
+    orientation ??= Math.floor(Math.random() * 4);
+    speed ??= 0;
+    // todo add car variants
+    const car = {type: "car", obj: models.car1, pos: new Vec(x), xVel: speed, orientation} as Tile;
+    lanes[z].push(car);
 }
 
 export function addRock(x: number, z: number, orientation?: number, variant?: number) {

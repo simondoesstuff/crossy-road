@@ -29,11 +29,33 @@ export class Object3D {
         this.reinitializeBuffers();
 
         this.boundingBox = this.measureBounds();
+
+        const offset = this.moveOrigin(); // vec 3
+        this.boundingBox = this.boundingBox.map(v => v.sub(offset)) as [Vec, Vec];
         const a = this.boundingBox[0].xz;
         const b = this.boundingBox[1].xz;
         this.boundingRect = [a, b];
 
         this.name = name;
+        console.log('Loaded', this.name, ', bounds:', this.boundingRect);
+    }
+
+    // Moves the origin such that the points are about the center of the bounding box (xz plane).
+    // And the y coordinate is the minimum y coordinate of the bounding box.
+    private moveOrigin(): Vec {
+        const [min, max] = this.boundingBox;
+        const center = min.add(max).mul(.5);
+        const y = min.y;
+
+        const pos = this.mesh.attributes.POSITION.value;
+        const n = pos.length;
+        for (let i = 0; i < n; i += 3) {
+            pos[i] -= center.x;
+            pos[i + 1] -= y;
+            pos[i + 2] -= center.z;
+        }
+
+        return center.setY(y);
     }
 
     private measureBounds(): [Vec, Vec] {
