@@ -84,7 +84,7 @@ export async function init() {
             const x = player.pos.x * tileWidth;
             const z = -player.pos.z * tileWidth;
 
-            const tileZ = Math.trunc(player.pos.z);
+            const tileZ = Math.round(player.pos.z);
             const yOffset = offsets[tileZ];
             const y = player.pos.y * tileWidth + yOffset;
 
