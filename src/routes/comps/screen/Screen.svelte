@@ -4,18 +4,29 @@
     import DeadScreen from "./DeadScreen.svelte";
     import {aliveStore, ready, scoreStore} from "$lib/UIState";
     import {fly} from 'svelte/transition';
+    import {swipe} from 'svelte-gestures';
+    import * as inputManager from "$lib/webGL/input";
 
     let score = scoreStore.get();
     scoreStore.listen((v) => score = v);
-
     let alive = aliveStore.get();
     aliveStore.listen((v) => alive = v);
 
     let canvas: HTMLCanvasElement;
-
     onMount(async () => {
         await glManager.init(canvas);
     });
+
+    let t0 = 0;
+    function handleSwipe(direction) {
+        const now = performance.now();
+        if (now - t0 < 5) return; // 5ms debounce
+        t0 = now;
+        inputManager.triggerSwipe('swipe' + direction);
+    }
+    function handleStartSwipe() {
+        inputManager.triggerMouseDown();
+    }
 </script>
 
 <h1 class="absolute top-0 left-0 m-5 text-6xl arcadeText">
@@ -41,6 +52,9 @@
 
 <!-- WebGL Canvas -->
 <canvas id="screen" class="w-screen h-screen z-[-100]"
+        use:swipe={{ timeframe: 1000, minSwipeDistance: 0}} on:swipe={(e) => handleSwipe(e.detail.direction)}
+        on:click={() => handleSwipe('top')}
+        on:mousedown={handleStartSwipe}
         bind:this={canvas}>
 </canvas>
 

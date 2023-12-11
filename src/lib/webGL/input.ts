@@ -16,7 +16,13 @@ const keyMap = {
     'Enter': 'forward',
 
     'Escape': 'pause',
-    'KeyP': 'pause'
+    'KeyP': 'pause',
+
+    'click': 'forward',
+    'swipetop': 'forward',
+    'swipebottom': 'backward',
+    'swipeleft': 'left',
+    'swiperight': 'right',
 };
 
 const keyState = new Map<string, boolean>();
@@ -65,6 +71,20 @@ export async function* init() {
         keyState.set(action, false);
         upMap.get(action)!.fire(action);
     });
+}
+
+export function triggerMouseDown() {
+    const action = keyMap['click'] as Action;
+    keyState.set(action, true);
+    downMap.get(action)!.fire(action);
+}
+
+export function triggerSwipe(code: string) {
+    // @ts-ignore
+    const action = keyMap[code] as Action;
+    if (!action) return;
+    keyState.set(action, false);
+    upMap.get(action)!.fire(action);
 }
 
 export function isDownNow(action: string) {
