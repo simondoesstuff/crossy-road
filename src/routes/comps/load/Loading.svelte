@@ -7,6 +7,10 @@
     let progress = 'What\'s good?';
 
     onMount(() => {
+        if (loading.get() === 1) {
+            return;
+        }
+
         canvas.width = canvas.offsetWidth;
         canvas.height = canvas.offsetHeight;
 
@@ -25,8 +29,8 @@
                     progress = `${Math.round(v * 100)}%`;
 
                     if (v === 1) {
+                        loading.unlisten(updateProgress);
                         r.stop();
-                        r.cleanup();
                     }
                 }
 
