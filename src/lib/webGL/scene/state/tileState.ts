@@ -121,13 +121,6 @@ export function playerIntersections(filterFor: (tile: Tile) => boolean = () => t
             const tileBox = tile.obj.boundingRect;
             const tileBox_t = transformBox(tileBox, matrix);
 
-            const m = (x) => [Math.round(x[0]*10)/10, -Math.round(x[1]*10)/10];
-            const p1 = m(playerBox_t[0].data);
-            const p2 = m(playerBox_t[1].data);
-            const t1 = m(tileBox_t[0].data);
-            const t2 = m(tileBox_t[1].data);
-            console.log(`(${p1}), (${t1})\n(${p2}), (${t2})`)
-
             const intersectDelta = BoundingBox.intersect(playerBox_t[0], playerBox_t[1], tileBox_t[0], tileBox_t[1]);
             if (intersectDelta) {
                 objects.push({

@@ -1,26 +1,18 @@
 import * as input from "../../input";
-import {lerp} from "../../animation";
+import {lerp, step} from "../../animation";
 import {BoundingBox, Vec} from "$lib/webGL/math/linear_algebra";
 import {Event, Store} from "$lib/webGL/utils";
 import {isObstacle, score} from "$lib/webGL/scene/state/tileState";
-import {models} from "$lib/webGL/resources";
 import {events} from "$lib/webGL/glManager";
 import * as camera from "$lib/webGL/scene/display/camera";
 
-// todo consider a late update function to--
-// increment the animations in-between frames
 
-// y = -1/2 at^2 + vt
-// y' = -at + v // delta y depends on t_total
-// v_initial = -1/2 a (jump_duration)
-
-const jumpDuration = .18;
-const jumpVelocity = 1.27 / jumpDuration;
+const jumpDuration = .18*5;
+const jumpHeight = 3;
 const stretchRange = .2;
 const stretchSpeed = 3.864 / jumpDuration;
 const spinSpeed = 2.5 / jumpDuration;
 
-const gravity = 2 * jumpVelocity / jumpDuration;
 const dxdt = 1 / jumpDuration;
 const modelRadius = .4;
 
@@ -28,10 +20,10 @@ export let pos = new Vec(10, 0, 5); // initial position
 export let orient = 0;
 export let stretch = Vec.zero(3).add(1);
 export const onMove = new Event<() => void>();
-
 export const alive = new Store(true);
 
 let t = 0;
+let t0 = -jumpDuration; // used to get a normalized t
 let posTarget = pos.clone();
 let stretchTargets: number[] = [];
 let targetOrient = 0;
@@ -40,20 +32,24 @@ let drift = 0; // used when the player is killed by a vehicle
 export function init() {
     const onUp = (dir: [number, number], newOrient: number) => () => {
         if (!alive.get()) return;
-        if (t != 0) return;
 
-        targetOrient = newOrient;
         stretchTargets = [1 + stretchRange, 1];
+        targetOrient = newOrient;
+
+        const x = Math.round(pos.x + dir[0]);
+        const z = Math.round(pos.z + dir[1]);
 
         {
-            const x = Math.trunc(pos.x) + dir[0];
-            const z = Math.trunc(pos.z) + dir[1];
             if (isObstacle(x, z)) return;
         }
 
-        t = -jumpDuration;
-        posTarget.x += dir[0];
-        posTarget.z += dir[1];
+        posTarget.x = x;
+        posTarget.z = z;
+
+        if (t == 0) {
+            t = posTarget.sub(pos).mag();
+            t0 = t;
+        }
 
         camera.caffeinate();
         onMove.fire();
@@ -66,7 +62,6 @@ export function init() {
 
     const onDown = () => {
         if (!alive.get()) return;
-        if (t != 0) return;
         stretchTargets = [1 - stretchRange];
     }
 
@@ -75,7 +70,7 @@ export function init() {
     input.down.add('left', onDown);
     input.down.add('right', onDown);
 
-    events.frame.add(update);
+    events.lateFrame.add(update);
 }
 
 
@@ -110,12 +105,12 @@ function update(dt: number) {
 
     if (t == 0) return;
 
-    dt = Math.min(dt, -t); // don't overshoot
-    t += dt;
+    dt = Math.min(dt, t/dxdt); // don't overshoot
+    t = posTarget.sub(pos).mag();
 
     move(dt);
 
-    if (t >= 0) {
+    if (Math.abs(t) < .01) {
         t = 0;
         pos = posTarget.clone();
     }
@@ -125,13 +120,15 @@ function move(dt: number) {
     if (!alive.get()) return;
 
     // quadratic vertical movement
-    const dy = -gravity * t - jumpVelocity;
-    pos.y += dy * dt;
+    const t1 = t/t0; // normalized t
+    const t2 = t1 * t1;
+    pos.y = -4 * jumpHeight * (t2 - t1);
+    pos.y = Math.max(pos.y, 0);
 
     // linear horizontal movement
     const dx = dxdt * dt;
-    if (pos.x != posTarget.x) pos.x += dx * Math.sign(posTarget.x - pos.x);
-    if (pos.z != posTarget.z) pos.z += dx * Math.sign(posTarget.z - pos.z);
+    pos.x = step(pos.x, posTarget.x, dx);
+    pos.z = step(pos.z, posTarget.z, dx);
 
     const newScore = Math.round(pos.z);
     if (newScore > score.get()) {
@@ -145,11 +142,8 @@ export function kill(intersectDelta: [number, number], newVelocity: number) {
     orient = Math.round(orient) % 4;
     const onX = Math.abs(intersectDelta[0]) < Math.abs(intersectDelta[1]);
 
-    console.log('deltas', intersectDelta)
-
     stretch = Vec.zero(3).add(1.17);
     if (onX) {
-        console.log("intersect on x")
         // 1. move to the edge of the intersection
         // 2. squash along intersection axis
         pos.x += intersectDelta[0] / 20;
