@@ -1,7 +1,7 @@
 import {gl} from "./glManager";
 import {importFile} from "$lib/webGL/utils";
 
-let shaders: Map<string, Shader>;
+export let shaders: Map<string, Shader> = new Map();
 
 export interface Shader {
     name: string;
@@ -28,9 +28,9 @@ export interface CrossyShader extends Shader {
     }
 }
 
-export async function initShaders(): Promise<Map<string, Shader>> {
-    let shaders = new Map<string, Shader>();
+export async function* initShaders() {
     shaders.set('default', await compileShader('default'));
+    yield .2;
 
     const crossy = await compileShader('crossy') as CrossyShader;
     crossy.uniform.directionalLightDir = gl.getUniformLocation(crossy.program, 'u_directionalLightDir')!;
@@ -38,8 +38,6 @@ export async function initShaders(): Promise<Map<string, Shader>> {
     crossy.uniform.ambientLightColor = gl.getUniformLocation(crossy.program, 'u_ambientLightColor')!;
     crossy.uniform.normalMatrix = gl.getUniformLocation(crossy.program, 'u_normalMatrix')!;
     shaders.set('crossy', crossy);
-
-    return shaders;
 }
 
 // loads a shader from file and compiles it

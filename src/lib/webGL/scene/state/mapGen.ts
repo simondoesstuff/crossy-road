@@ -53,8 +53,8 @@ const obstacleStats = {
 
 let prevBiome = "water"; // this prevents the initial biome from being water
 
-export function init() {
-    resetMap();
+export async function* init() {
+    yield* resetMap();
 
     // as the player moves, the chunks will be added to the end of the map
     score.listen((s) => {
@@ -82,9 +82,14 @@ function tryExpand() {
 // Will delete all tiles, and rebuild the safe zone.
 // Warning: this will not reset the player's position so if the score
 // has not been reset first, the safe zone will not be at zero.
-export function resetMap() {
+//
+// Because this function is used by an init function, it async yields percentage
+// progress values.
+export async function* resetMap() {
     eraseMap()
+    yield .33;
     buildGrassBiome(8); // initial safe zone
+    yield .67;
     tryExpand();
 }
 

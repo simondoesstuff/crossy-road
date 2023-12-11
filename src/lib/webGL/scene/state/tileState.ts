@@ -48,12 +48,14 @@ export interface Tile {
 
 let lanes: Tile[][] = [];
 
-export async function init() {
-    let dispInit = display.init(); // promise captured for concurrent initialization
-    player.init();
-    mapGenInit();
+export async function* init() {
+    for await (const r of mapGenInit())
+        yield .30 * r;
+    for await (const r of player.init())
+        yield .30 + .15 * r;
+    for await (const r of display.init())
+        yield .45 + .50 * r;
 
-    await dispInit;
     updateDisplay();
 
     glEvents.frame.add(marchObjects);

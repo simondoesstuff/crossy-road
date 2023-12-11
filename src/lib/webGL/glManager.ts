@@ -1,10 +1,12 @@
 // todo consider a clever init system that uses awaitAll to maximize concurrency
 
-import {Event} from './utils';
-import {type CrossyShader, initShaders, type Shader} from "$lib/webGL/shader";
+import {Event, Store} from './utils';
+import * as shaderManager from "$lib/webGL/shader";
 import {mat4} from "gl-matrix";
 import {init as inputInit} from '$lib/webGL/input';
 import {init as resourcesInit} from '$lib/webGL/resources';
+import type {CrossyShader} from "$lib/webGL/shader";
+import {init as sceneInit} from '$lib/webGL/scene/crossyRoadScene';
 
 export let gl: WebGLRenderingContext;
 
@@ -16,30 +18,53 @@ export const events = {
     ready: new Event<() => void>(), // called after initialization
 }
 
-export let shaders: Map<string, Shader>;
 export let shader: CrossyShader;
 export let modelViewMatrix = mat4.create();
+export const loading = new Store(0);
 
 
 /// Assumes that only one canvas is used for WebGL
 export async function init(canvas: HTMLCanvasElement) {
-    gl = canvas.getContext("webgl")!;
+    const initContext = async function* () {
+        gl = canvas.getContext("webgl")!;
 
-    if (!gl) {
-        throw "Unable to initialize WebGL. Your browser or machine may not support it.";
+        if (!gl) {
+            throw "Unable to initialize WebGL. Your browser or machine may not support it.";
+        }
+
+        addEventListener('resize', () => checkCanvasSize()); // todo resize isn't working
     }
 
-    addEventListener('resize', () => checkCanvasSize()); // todo resize isn't working
-    inputInit();
-    await resourcesInit();
+    // handle initialization process
+    const initShaders = async function* () {
+        for await (const r of shaderManager.initShaders())
+            yield .8 * r;
 
-    // load shaders
-    // set shader uniforms
+        shader = shaderManager.shaders.get('crossy') as CrossyShader;
+        gl.useProgram(shader.program);
+    }
 
-    shaders = await initShaders();
-    shader = shaders.get('crossy') as CrossyShader;
-    gl.useProgram(shader.program);
+    const initQueue = [initContext, inputInit, resourcesInit, initShaders, glSetup, sceneInit];
+    const weight = 1/initQueue.length;
+    let progress = 0;
 
+    for (let i = 0; i < initQueue.length; i++) {
+        const gen = initQueue[i]();
+
+        for await (const result of gen) {
+            const next = progress + weight*result;
+            loading.set(next);
+        }
+
+        progress += weight;
+        loading.set(progress);
+    }
+
+    loading.set(1);
+    events.ready.fire();
+}
+
+async function* glSetup() {
     events.resize.add((w, h) => {
         let projMatrix = mat4.create();
         const far = 1000;
@@ -50,6 +75,7 @@ export async function init(canvas: HTMLCanvasElement) {
         mat4.ortho(projMatrix, -orthWidth/2, orthWidth/2, -orthHeight/2, orthHeight/2, 0.1, far);
         gl.uniformMatrix4fv(shader.uniform.projectionMatrix, false, projMatrix);
     });
+    yield .05;
 
     // scene setup
 
@@ -57,6 +83,7 @@ export async function init(canvas: HTMLCanvasElement) {
     gl.depthFunc(gl.LEQUAL); // Near things obscure far things
     gl.enable(gl.CULL_FACE); // Cull triangles which normal is not towards the camera
     gl.cullFace(gl.BACK); // Cull back faces
+    yield .40;
 
     events.frame.add(() => {
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
@@ -98,6 +125,7 @@ export function checkCanvasSize() {
 }
 
 export function startRendering() {
+    checkCanvasSize();
     let then: number = 0;
 
     function doFrame(now: number) {

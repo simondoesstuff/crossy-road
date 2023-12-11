@@ -28,6 +28,7 @@ import {Store} from "$lib/webGL/utils";
 
 export let scoreStore: Store<number>;
 export let aliveStore: Store<boolean>;
+export const ready = glManager.events.ready;
 
 function forward<T>(defaultValue?: T) {
     // @ts-ignore

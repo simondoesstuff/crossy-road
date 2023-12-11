@@ -12,7 +12,7 @@ let tiles: Map<Object3D, Tile[]>;
 let offsets: number[];
 let playerMvMatrix: mat4;
 
-export async function init() {
+export async function* init() {
     gl.clearColor(0, 0, 0.1, 1.0);
 
     gl.uniform4fv(shader.uniform.directionalLightDir, [-1.0, 1.0, 0.9, 0]);
@@ -20,6 +20,8 @@ export async function init() {
     gl.uniform4fv(shader.uniform.ambientLightColor, [.6, .6, .6, 1]);
 
     cameraInit();
+
+    yield .5;
 
     let rot = 0;
     events.frame.add((dt) => {

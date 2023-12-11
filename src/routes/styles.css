@@ -54,4 +54,8 @@ Layers:
     .center {
         @apply grid place-content-center;
     }
+
+    .full {
+        @apply w-full h-full;
+    }
 }

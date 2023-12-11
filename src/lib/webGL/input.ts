@@ -38,11 +38,13 @@ const upMap: Map<Action, Event<InputEvent>> = new Map();
 export const up = safeMap(upMap);
 export const down = safeMap(downMap);
 
-export function init() {
+export async function* init() {
     for (const action of new Set(Object.values(keyMap))) {
         downMap.set(action as Action, new Event());
         upMap.set(action as Action, new Event());
     }
+
+    yield .33;
 
     document.addEventListener('keydown', (e) => {
         // @ts-ignore
@@ -52,6 +54,8 @@ export function init() {
         keyState.set(action, true);
         downMap.get(action)!.fire(action);
     });
+
+    yield .67;
 
     document.addEventListener('keyup', (e) => {
         // @ts-ignore

@@ -29,7 +29,7 @@ let stretchTargets: number[] = [];
 let targetOrient = 0;
 let drift = 0; // used when the player is killed by a vehicle
 
-export function init() {
+export async function* init() {
     const onUp = (dir: [number, number], newOrient: number) => () => {
         if (!alive.get()) return;
 
@@ -59,6 +59,8 @@ export function init() {
     input.up.add('backward', onUp([0, -1], 2));
     input.up.add('left', onUp([-1, 0], 1));
     input.up.add('right', onUp([1, 0], 3));
+
+    yield .5;
 
     const onDown = () => {
         if (!alive.get()) return;

@@ -2,7 +2,7 @@
     import Arcade from "../Arcade.svelte";
     import Button from "../Button.svelte";
     import {scoreStore} from "$lib/UIState";
-    import {reset} from "$lib/webGL/scene/state/highLevel";
+    import {reset} from "$lib/webGL/scene/crossyRoadScene";
 
     let score = scoreStore.get();
     scoreStore.listen((s) => score = s);

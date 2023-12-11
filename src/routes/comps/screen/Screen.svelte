@@ -1,9 +1,8 @@
 <script lang="ts">
     import * as glManager from "$lib/webGL/glManager";
-    import * as crossyScene from "$lib/webGL/scene/crossyRoadScene";
     import {onMount} from "svelte";
     import DeadScreen from "./DeadScreen.svelte";
-    import {aliveStore, scoreStore} from "$lib/UIState";
+    import {aliveStore, ready, scoreStore} from "$lib/UIState";
     import {fly} from 'svelte/transition';
 
     let score = scoreStore.get();
@@ -15,18 +14,7 @@
     let canvas: HTMLCanvasElement;
 
     onMount(async () => {
-        // todo revert try catch
-        // try {
         await glManager.init(canvas);
-        await crossyScene.init();
-        glManager.events.ready.fire();
-        glManager.startRendering();
-
-        // } catch (e: any) {
-        //     if (typeof e === "string") {
-        //         alert("Error: " + e);
-        //     } else throw e;
-        // }
     });
 </script>
 

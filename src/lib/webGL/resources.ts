@@ -172,7 +172,7 @@ export interface Models {
 
 export let models: Models = {} as Models;
 
-async function loadModels(pack: string) {
+async function* loadModels(pack: string) {
     const keys = [
         'safe', 'safe2', 'road', 'roadStripe', 'roadCap', 'roadCap2',
         'treeBase', 'treeTop', 'rock', 'track', 'trackPost', 'player',
@@ -181,12 +181,14 @@ async function loadModels(pack: string) {
 
     const prefix = `./resourcePacks/${pack}/`;
 
-    for (const model of keys) {
+    for (let i = 0; i < keys.length; i++) {
+        const model = keys[i];
         // @ts-ignore
         models[model] = await Object3D.fromPath(prefix + model + '.ply', model);
+        yield i / keys.length;
     }
 }
 
-export async function init() {
-    await loadModels('basic');
+export async function* init() {
+    yield* loadModels('basic');
 }
