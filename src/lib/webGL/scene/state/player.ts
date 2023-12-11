@@ -8,7 +8,7 @@ import * as camera from "$lib/webGL/scene/display/camera";
 
 
 const jumpDuration = .20;
-const jumpHeight = .25;
+const jumpHeight = .20;
 const stretchRange = .2;
 const stretchSpeed = 3.864 / jumpDuration;
 const spinSpeed = 2.5 / jumpDuration;
