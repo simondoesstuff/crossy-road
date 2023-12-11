@@ -1,13 +1,13 @@
 import type {Object3D} from "$lib/webGL/resources";
-import {BoundingBox, Vec} from "$lib/webGL/math/linear_algebra";
 import {models} from "$lib/webGL/resources";
+import {BoundingBox, Vec} from "$lib/webGL/math/linear_algebra";
 import * as display from "$lib/webGL/scene/display/display";
 import {events as glEvents} from "$lib/webGL/glManager";
 import * as player from "$lib/webGL/scene/state/player";
 import {Store} from "$lib/webGL/utils";
 import {init as mapGenInit} from "$lib/webGL/scene/state/mapGen";
 import type {mat4} from "gl-matrix";
-import {vec2, vec3} from "gl-matrix";
+import {vec3} from "gl-matrix";
 
 
 /*
@@ -58,10 +58,9 @@ export async function init() {
 
     glEvents.frame.add(marchObjects);
 
-    glEvents.lateFrame.add((dt: number) => {
+    glEvents.lateFrame.add(() => {
         if (!player.alive.get()) return;
 
-        const playerBox = models.player.boundingRect;
         const objs = carsIntersecting();
         if (objs.length == 0) return;
 
@@ -69,6 +68,11 @@ export async function init() {
         const vel = hit.tile.xVel ?? 0;
         player.kill(hit.delta, vel);
     });
+}
+
+export function eraseMap() {
+    lanes = [];
+    updateDisplay();
 }
 
 export function laneCount() {

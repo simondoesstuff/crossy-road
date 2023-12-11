@@ -2,6 +2,56 @@
 @tailwind components;
 @tailwind utilities;
 
-html {
-    @apply bg-black text-white;
+/*
+Layers:
+    1. Base
+        is used to set up the default styles for elements
+    2. Components
+         is used to style the components of your application
+    3. Utilities
+        is used to style the utilities of your application
+ */
+
+@layer base {
+    body {
+        @apply bg-black text-white text-xl;
+        letter-spacing: 2px;
+    }
+}
+
+@layer components {
+}
+
+@layer utilities {
+    @font-face {
+        font-family: "Soloman";
+        src: url("/fonts/soloman.ttf");
+    }
+
+    .arcadeText {
+        font-family: Soloman, sans-serif;
+    }
+
+    .cutCorners {
+        --amnt: 5px;
+        clip-path: polygon(
+                0 var(--amnt),
+                var(--amnt) var(--amnt),
+                var(--amnt) 0,
+                calc(100% - var(--amnt)) 0,
+                calc(100% - var(--amnt)) var(--amnt),
+                100% var(--amnt),
+                100% calc(100% - var(--amnt)),
+                calc(100% - var(--amnt)) calc(100% - var(--amnt)),
+                calc(100% - var(--amnt)) 100%,
+                var(--amnt) 100%,
+                var(--amnt) calc(100% - var(--amnt)),
+                0 calc(100% - var(--amnt))
+        );
+        overflow: hidden;
+    }
+
+    .center {
+        @apply grid place-content-center;
+    }
 }

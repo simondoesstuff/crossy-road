@@ -13,6 +13,7 @@ export const events = {
     // deltaTime in ms
     frame: new Event<(deltaTime: number) => void>(),
     lateFrame: new Event<(deltaTime: number) => void>(),
+    ready: new Event<() => void>(), // called after initialization
 }
 
 export let shaders: Map<string, Shader>;
@@ -57,7 +58,7 @@ export async function init(canvas: HTMLCanvasElement) {
     gl.enable(gl.CULL_FACE); // Cull triangles which normal is not towards the camera
     gl.cullFace(gl.BACK); // Cull back faces
 
-    events.frame.add((dt) => {
+    events.frame.add(() => {
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     });
 

@@ -9,7 +9,7 @@ import {bernoulli, choice, normalNice, uniform} from "$lib/webGL/math/statistics
 import {
     addBoulevard, addCar,
     addRock,
-    addTree,
+    addTree, eraseMap,
     laneCount,
     retireLane,
     score,
@@ -54,30 +54,38 @@ const obstacleStats = {
 let prevBiome = "water"; // this prevents the initial biome from being water
 
 export function init() {
-    const tryExpand = () => {
-        // the score only increases -- this callback is only called when the player moves forward
-        while (laneCount() - score.get() <= laneBuffer) {
-            addChunk(); // (ambiguous size)
-        }
-
-        // very old lanes should be garbage collected
-        const garbageBuffer = 2 * laneBuffer;
-        const garbageEdge = score.get() - garbageBuffer;
-        for (let i = garbageEdge - laneBuffer; i < garbageEdge; i++) {
-            if (i < 0) continue;
-            retireLane(i);
-        }
-
-        updateDisplay();
-    }
-
-    buildGrassBiome(8); // initial safe zone
-    tryExpand();
+    resetMap();
 
     // as the player moves, the chunks will be added to the end of the map
     score.listen((s) => {
         tryExpand();
     });
+}
+
+function tryExpand() {
+    // the score only increases -- this callback is only called when the player moves forward
+    while (laneCount() - score.get() <= laneBuffer) {
+        addChunk(); // (ambiguous size)
+    }
+
+    // very old lanes should be garbage collected
+    const garbageBuffer = 2 * laneBuffer;
+    const garbageEdge = score.get() - garbageBuffer;
+    for (let i = garbageEdge - laneBuffer; i < garbageEdge; i++) {
+        if (i < 0) continue;
+        retireLane(i);
+    }
+
+    updateDisplay();
+}
+
+// Will delete all tiles, and rebuild the safe zone.
+// Warning: this will not reset the player's position so if the score
+// has not been reset first, the safe zone will not be at zero.
+export function resetMap() {
+    eraseMap()
+    buildGrassBiome(8); // initial safe zone
+    tryExpand();
 }
 
 function addChunk() {

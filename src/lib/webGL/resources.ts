@@ -4,7 +4,6 @@ import {PLYLoader} from "@loaders.gl/ply";
 import {load} from "@loaders.gl/core";
 import type {PLYMesh} from "@loaders.gl/ply/dist/lib/ply-types";
 import {gl, shader as glShader} from "$lib/webGL/glManager";
-import {BoundingBox} from "$lib/webGL/math/linear_algebra";
 import {Vec} from "$lib/webGL/math/linear_algebra";
 
 /// Note, only supports ply files.
@@ -37,7 +36,6 @@ export class Object3D {
         this.boundingRect = [a, b];
 
         this.name = name;
-        console.log('Loaded', this.name, ', bounds:', this.boundingRect);
     }
 
     // Moves the origin such that the points are about the center of the bounding box (xz plane).

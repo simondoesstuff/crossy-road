@@ -71,6 +71,7 @@ export function init() {
     input.down.add('right', onDown);
 
     events.lateFrame.add(update);
+    alive.listenFor(true, revive);
 }
 
 
@@ -134,6 +135,22 @@ function move(dt: number) {
     if (newScore > score.get()) {
         score.set(newScore);
     }
+}
+
+// called when the player is set to alive after being killed.
+// can be triggered externally with the alive store.
+function revive() {
+    pos = new Vec(10, 0, 5);
+    orient = 0;
+    stretch = Vec.zero(3).add(1);
+    stretchTargets = [];
+    targetOrient = 0;
+    posTarget = pos.clone();
+    t = 0;
+    t0 = -jumpDuration;
+    drift = 0;
+    alive.set(true);
+    score.set(Math.round(pos.z));
 }
 
 // used when the player is killed by a vehicle.
