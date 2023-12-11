@@ -1,6 +1,6 @@
 import * as input from "../../input";
 import {lerp, step} from "../../animation";
-import {BoundingBox, Vec} from "$lib/webGL/math/linear_algebra";
+import {Vec} from "$lib/webGL/math/linear_algebra";
 import {Event, Store} from "$lib/webGL/utils";
 import {isObstacle, score} from "$lib/webGL/scene/state/tileState";
 import {events} from "$lib/webGL/glManager";

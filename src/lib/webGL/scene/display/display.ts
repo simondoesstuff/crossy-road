@@ -3,12 +3,10 @@ import {events, gl, shader, updateModelViewMatrix, updateNormalMatrix} from "$li
 import * as camera from "$lib/webGL/scene/display/camera";
 import {mat4} from "gl-matrix";
 import type {Tile} from "$lib/webGL/scene/state/tileState";
-import {Vec} from "$lib/webGL/math/linear_algebra";
 import * as player from "$lib/webGL/scene/state/player";
 import {init as cameraInit} from "$lib/webGL/scene/display/camera";
 
 const tileWidth = 20;
-const tileHeight = .72; // refers to ground tiles
 
 let tiles: Map<Object3D, Tile[]>;
 let offsets: number[];
