@@ -7,8 +7,8 @@ import {events} from "$lib/webGL/glManager";
 import * as camera from "$lib/webGL/scene/display/camera";
 
 
-const jumpDuration = .18*5;
-const jumpHeight = 3;
+const jumpDuration = .20;
+const jumpHeight = .25;
 const stretchRange = .2;
 const stretchSpeed = 3.864 / jumpDuration;
 const spinSpeed = 2.5 / jumpDuration;
@@ -47,7 +47,7 @@ export function init() {
         posTarget.z = z;
 
         if (t == 0) {
-            t = posTarget.sub(pos).mag();
+            t = posTarget.xz.sub(pos.xz).mag();
             t0 = t;
         }
 
@@ -106,7 +106,7 @@ function update(dt: number) {
     if (t == 0) return;
 
     dt = Math.min(dt, t/dxdt); // don't overshoot
-    t = posTarget.sub(pos).mag();
+    t = posTarget.xz.sub(pos.xz).mag();
 
     move(dt);
 
@@ -152,7 +152,6 @@ export function kill(intersectDelta: [number, number], newVelocity: number) {
         // (x/20) to convert to tile units
         stretch.x = 0.1;
     } else {
-        console.log("intersect on z")
         pos.z -= intersectDelta[1] / 20; // z is negated due to camera orientation
         pos.z -= modelRadius * -Math.sign(intersectDelta[1]);
         stretch.z = 0.1

@@ -30,14 +30,14 @@ const biomeStats = {
     //     }
     // },
     grass: {
-        chance: 40,
+        chance: 70,
         width: {
             mean: 1,
             sigma: 2
         }
     },
     road: {
-        chance: 50,
+        chance: 30,
         width: {
             mean: 1,
             sigma: 0
