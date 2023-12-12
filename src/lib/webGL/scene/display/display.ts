@@ -16,8 +16,8 @@ export async function* init() {
     gl.clearColor(0, 0, 0.1, 1.0);
 
     gl.uniform4fv(shader.uniform.directionalLightDir, [-1.0, 1.0, 0.9, 0]);
-    gl.uniform4fv(shader.uniform.directionalLightColor, [0.6, 0.6, 0.6, 1]);
-    gl.uniform4fv(shader.uniform.ambientLightColor, [.6, .6, .6, 1]);
+    gl.uniform4fv(shader.uniform.directionalLightColor, [0.23, 0.23, 0.23, 1]);
+    gl.uniform4fv(shader.uniform.ambientLightColor, [.72, .72, .72, 1]);
 
     cameraInit();
 
@@ -98,8 +98,6 @@ export async function* init() {
             models.player.bind();
             models.player.draw();
         }
-
-        updateModelViewMatrix(rootMatrix);
     });
 }
 

@@ -281,8 +281,9 @@ export function addTrain(z: number) {
 export function addCar(x: number, z: number, speed?: number, orientation?: number, variant?: number) {
     orientation ??= Math.floor(Math.random() * 4);
     speed ??= 0;
-    // todo add car variants
-    const car = {type: "car", obj: models.car1, pos: new Vec(x), xVel: speed, orientation} as Tile;
+    variant ??= Math.floor(Math.random() * 3);
+    const model = [models.car1, models.car2, models.car3][variant];
+    const car = {type: "car", obj: model, pos: new Vec(x), xVel: speed, orientation} as Tile;
     lanes[z].push(car);
 }
 

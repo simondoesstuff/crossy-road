@@ -168,6 +168,8 @@ export interface Models {
     trackPost: Object3D;
     player: Object3D;
     car1: Object3D;
+    car2: Object3D;
+    car3: Object3D;
 }
 
 export let models: Models = {} as Models;
@@ -176,7 +178,7 @@ async function* loadModels(pack: string) {
     const keys = [
         'safe', 'safe2', 'road', 'roadStripe', 'roadCap', 'roadCap2',
         'treeBase', 'treeTop', 'rock', 'track', 'trackPost', 'player',
-        'car1'
+        'car1', 'car2', 'car3'
     ];
 
     const prefix = `./resourcePacks/${pack}/`;
