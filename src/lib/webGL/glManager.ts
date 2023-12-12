@@ -128,15 +128,27 @@ export function startRendering() {
     checkCanvasSize();
     let then: number = 0;
 
+    let fps = Array(10).fill(0);
+    let i = 0;
+
     function doFrame(now: number) {
         if (then === 0) then = now;
-        const deltaTime = now - then;
+        const deltaTimeMs = now - then;
         then = now;
 
-        const dt = deltaTime/1000;
+        const dt = deltaTimeMs/1000;
         events.frame.fire(dt);
         events.lateFrame.fire(dt);
         requestAnimationFrame(doFrame);
+
+        fps.shift();
+        fps.push(dt);
+
+        i++;
+        if (i % 30 == 0) {
+            const fpsAvg = fps.length / fps.reduce((a, b) => a + b, 0);
+            console.log('FPS: ' + Math.round(fpsAvg * 100) / 100);
+        }
     }
 
     // @ts-ignore

@@ -58,8 +58,7 @@ export async function* init() {
 
     updateDisplay();
 
-    glEvents.frame.add(marchObjects);
-
+    glEvents.lateFrame.add(marchObjects);
     glEvents.lateFrame.add(() => {
         if (!player.alive.get()) return;
 
@@ -92,6 +91,10 @@ export function retireLane(z: number) {
 
 // determines the intersecting objects at the given position of the given bounding box.
 export function playerIntersections(filterFor: (tile: Tile) => boolean = () => true) {
+    // todo intersections feel harsh
+    //     try only doing scans on the rounded z pos even though it's inaccurate
+    //     and forget hit boxes entirely and only look for cars with similar x pos
+
     // utility function to apply a matrix transformation(s) to a bounding box
     const transformVec = (vec: Vec, matrix: mat4) => {
         // the input vectors are in the XZ (horizontal) plane, but the matrix is in XYZ(W)
@@ -137,7 +140,7 @@ export function playerIntersections(filterFor: (tile: Tile) => boolean = () => t
         }
     }
 
-    const zCenter = Math.trunc(player.pos.z);
+    const zCenter = Math.round(player.pos.z);
     scanLane(zCenter);
 
     if (player.pos.z == zCenter) {
@@ -167,13 +170,17 @@ function marchObjects(dt: number) {
             if (tile.xVel) {
                 tile.pos.x += tile.xVel * dt; // march position
                 if (tile.pos.x < xBounds[0] || tile.pos.x > xBounds[1]) {
-                    tile.xVel *= -1; // reverse direction
+                    // reset position if it leaves the bounds
+                    // if (Math.sign(tile.xVel) == 1) {
+                    //     tile.pos.x = xBounds[0];
+                    // } else {
+                    //     tile.pos.x = xBounds[1];
+                    // }
 
-                    // todo revert
                     // remove tile if it leaves the bounds
-                    // lane.splice(i, 1);
-                    // i--;
-                    // needsUpdate = true;
+                    lane.splice(i, 1);
+                    i--;
+                    needsUpdate = true;
                 }
             }
         }

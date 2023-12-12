@@ -10,7 +10,7 @@ import {alive, pos as playerPos} from "$lib/webGL/scene/state/player";
 // the camera does not get "bored" when the player has been dead, it will
 // just remain at a roughly fixed position (disregarding momentum).
 
-export let pos = new Vec(10, 0, 4);
+export let pos = Vec.zero(3);
 const lerpSpeed = 3;
 const boredTime = 5;
 const boredSpeed = 1;
@@ -21,13 +21,19 @@ let target = pos.clone();
 
 export function init() {
     events.frame.add(update);
-
     // when the player dies, consider the camera caffeinated
     alive.listenFor(false, caffeinate);
+    resetCamera();
 }
 
 export function caffeinate() {
     timeSinceLastMove = 0;
+}
+
+export function resetCamera() {
+    caffeinate();
+    pos = playerPos.clone()
+    pos.z *= 2.5;
 }
 
 function update(dt: number) {

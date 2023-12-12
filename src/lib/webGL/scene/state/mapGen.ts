@@ -5,7 +5,7 @@
  */
 
 
-import {bernoulli, choice, normalNice, uniform} from "$lib/webGL/math/statistics";
+import {bernoulli, choice, normalDiscrete, uniformDiscrete} from "$lib/webGL/math/statistics";
 import {
     addBoulevard, addCar,
     addRock,
@@ -16,6 +16,7 @@ import {
     updateDisplay,
     xBounds
 } from "$lib/webGL/scene/state/tileState";
+import {spawnerOn, init as spawnerManagerInit, eraseAllSpawners, spawnerOff} from "$lib/webGL/scene/state/spawner";
 
 type biome = "grass" | "water" | "road"
 const laneBuffer = 20; // how many lanes should be buffered before the player reaches the end
@@ -30,23 +31,23 @@ const biomeStats = {
     //     }
     // },
     grass: {
-        chance: 70,
+        chance: 50,
         width: {
             mean: 1,
-            sigma: 2
+            sigma: 1.5
         }
     },
     road: {
-        chance: 30,
+        chance: 50,
         width: {
-            mean: 1,
-            sigma: 0
+            mean: 3,
+            sigma: .7
         }
     }
     // add waterSafe, waterRoad
 }
 const obstacleStats = {
-    any: .4, // chance of any obstacle
+    any: .3, // chance of any obstacle
     rock: .3,
     tree: .7,
 }
@@ -55,6 +56,8 @@ let prevBiome = "water"; // this prevents the initial biome from being water
 
 export async function* init() {
     resetMap();
+    yield .5;
+    spawnerManagerInit();
 
     // as the player moves, the chunks will be added to the end of the map
     score.listen((s) => {
@@ -71,9 +74,10 @@ function tryExpand() {
     // very old lanes should be garbage collected
     const garbageBuffer = 2 * laneBuffer;
     const garbageEdge = score.get() - garbageBuffer;
-    for (let i = garbageEdge - laneBuffer; i < garbageEdge; i++) {
-        if (i < 0) continue;
-        retireLane(i);
+    for (let z = garbageEdge - laneBuffer; z < garbageEdge; z++) {
+        if (z < 0) continue;
+        retireLane(z);
+        spawnerOff(z);
     }
 
     updateDisplay();
@@ -86,7 +90,8 @@ function tryExpand() {
 // Because this function is used by an init function, it async yields percentage
 // progress values.
 export function resetMap() {
-    eraseMap()
+    eraseMap();
+    eraseAllSpawners();
     buildGrassBiome(8); // initial safe zone
     tryExpand();
 }
@@ -119,7 +124,7 @@ function addChunk() {
     const mean = biomeStats[biome].width.mean;
     // @ts-ignore
     const sigma = biomeStats[biome].width.sigma;
-    const width = normalNice(mean - 1, sigma) + 1; // +1 to avoid 0 width
+    const width = normalDiscrete(mean - 1, sigma) + 1; // +1 to avoid 0 width
 
     switch (biome) {
         // case "water":
@@ -164,7 +169,7 @@ function addObstacle(x: number, z: number) {
             addRock(x, z);
             break;
         case 1:
-            addTree(x, z, uniform(1, 4));
+            addTree(x, z, uniformDiscrete(1, 4));
             break;
     }
 }
@@ -174,6 +179,6 @@ function buildRoadBiome(width: number) {
     addBoulevard("road", width);
     // todo experimental
     for (let z = laneCount() - width; z < laneCount(); z++) {
-        addCar(13, z, normalNice(0, 2), 2);
+        spawnerOn(z);
     }
 }

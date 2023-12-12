@@ -12,12 +12,13 @@ export function normal(mean: number, sigma: number): number {
 
 // Exactly like roll normal, but rounds and takes the abs val.
 // Bad for rolling negative decimals.
-export function normalNice(mean: number, sigma: number): number {
+export function normalDiscrete(mean: number, sigma: number): number {
     return Math.abs(Math.round(normal(mean, sigma)));
 }
 
 // Boolean trial based on a fixed probability of success.
-export function bernoulli(p: number): boolean {
+export function bernoulli(p?: number): boolean {
+    p ??= .5;
     const u0 = Math.random();
     return u0 < p;
 }
@@ -33,7 +34,13 @@ export function choice(weights: any[]): number { // todo not tested
     return weights.length - 1;
 }
 
-// Discrete uniformly distributed random number in the range [min, max]
+// Uniformly distributed random number in the range [min, max]
 export function uniform(min: number, max: number): number {
-    return Math.floor(Math.random() * (max - min + 1)) + min;
+    return Math.random() * (max - min) + min;
 }
+
+// Discrete uniformly distributed random number in the range [min, max]
+export function uniformDiscrete(min: number, max: number): number {
+    return Math.floor(Math.random() * (max - min)) + min;
+}
+

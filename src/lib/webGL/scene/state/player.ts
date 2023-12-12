@@ -7,10 +7,10 @@ import {events} from "$lib/webGL/glManager";
 import * as camera from "$lib/webGL/scene/display/camera";
 
 
-const jumpDuration = .20;
+const jumpDuration = .18;
 const jumpHeight = .20;
-const stretchRange = .2;
-const stretchSpeed = 3.864 / jumpDuration;
+const stretchRange = .27;
+const stretchSpeed = 3.9 / jumpDuration;
 const spinSpeed = 2.5 / jumpDuration;
 
 const dxdt = 1 / jumpDuration;

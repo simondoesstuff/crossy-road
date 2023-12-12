@@ -27,6 +27,7 @@
         inputManager.triggerSwipe('swipe' + direction);
     }
     function handleStartSwipe() {
+        // todo not working for mobile users
         inputManager.triggerMouseDown();
     }
 </script>
@@ -54,7 +55,7 @@
 
 <!-- WebGL Canvas -->
 <canvas id="screen" class="w-screen h-screen z-[-100]"
-        use:swipe={{ timeframe: 1000, minSwipeDistance: 100}} on:swipe={(e) => handleSwipe(e.detail.direction)}
+        use:swipe={{ timeframe: 1000, minSwipeDistance: 50}} on:swipe={(e) => handleSwipe(e.detail.direction)}
         on:click={() => handleSwipe('top')}
         on:mousedown={handleStartSwipe}
         bind:this={canvas}>
