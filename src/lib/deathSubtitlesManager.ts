@@ -1,6 +1,5 @@
-import {onMount} from "svelte";
-
 export let deathSubtitles: string[] = [];
+let scaleFactor = 10;
 
 export async function init() {
     if (deathSubtitles.length > 0) return;
@@ -12,7 +11,7 @@ export function deathSubtitle(score: number) {
         return 'A warmup?';
     }
 
-    score /= 7;
+    score /= scaleFactor;
     score = Math.floor(score);
     score = Math.min(score, deathSubtitles.length - 1);
     score = Math.max(score, 0);
