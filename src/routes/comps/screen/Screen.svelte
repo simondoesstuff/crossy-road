@@ -36,7 +36,7 @@
 </h1>
 
 <!-- GameOver/Dead screen let's player respawn -->
-{#if !alive}
+{#if !!alive}
     <div class="absolute w-full h-full center"
          in:fly={{ delay: 1350, duration: 500, y: -300}}
          out:fly={{ duration: 300, y: -300}}
