@@ -1,7 +1,11 @@
-import {events} from "$lib/webGL/glManager";
 import {bernoulli, uniform} from "$lib/webGL/math/statistics";
-import {addCar, updateDisplay, xBounds} from "$lib/webGL/scene/state/tileState";
+import {addCar, xBounds} from "$lib/webGL/scene/state/tileState";
 import {lerp} from "$lib/webGL/animation";
+
+/*
+todo currently cars are looping instead of being spawned in for the sake of efficiency
+    this is not ideal -- need a solution to avoid waves of GC lag spikes
+ */
 
 const carSize = 1.6;
 const config = {
@@ -23,13 +27,13 @@ type Spawner = {
 };
 
 export function init() {
-    events.lateFrame.add(() => {
-        for (const spawner of spawners.values()) {
-            spawner.update(performance.now() / 1000);
-        }
-
-        updateDisplay();
-    });
+    // events.lateFrame.add(() => {
+    //     for (const spawner of spawners.values()) {
+    //         spawner.update(performance.now() / 1000);
+    //     }
+    //
+    //     updateDisplay();
+    // });
 }
 
 export function eraseAllSpawners() {
@@ -73,7 +77,7 @@ function populate(minGap: number, maxGap: number, vel: number, z: number) {
     let x = xBounds[0];
     const orientation = Math.sign(vel) == 1 ? 0 : 2;
 
-    while (x < xBounds[1]) {
+    while (x < xBounds[1] - carSize) {
         x += uniform(minGap, maxGap) + carSize;
         addCar(x, z, vel, orientation);
     }

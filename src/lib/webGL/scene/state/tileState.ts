@@ -171,21 +171,22 @@ function marchObjects(dt: number) {
                 tile.pos.x += tile.xVel * dt; // march position
                 if (tile.pos.x < xBounds[0] || tile.pos.x > xBounds[1]) {
                     // reset position if it leaves the bounds
-                    // if (Math.sign(tile.xVel) == 1) {
-                    //     tile.pos.x = xBounds[0];
-                    // } else {
-                    //     tile.pos.x = xBounds[1];
-                    // }
+                    if (Math.sign(tile.xVel) == 1) {
+                        tile.pos.x = xBounds[0];
+                    } else {
+                        tile.pos.x = xBounds[1];
+                    }
 
                     // remove tile if it leaves the bounds
-                    lane.splice(i, 1);
-                    i--;
-                    needsUpdate = true;
+                    // lane.splice(i, 1);
+                    // i--;
+                    // needsUpdate = true;
                 }
             }
         }
     }
 
+    // todo why is this here again?
     if (needsUpdate) updateDisplay();
 }
 
