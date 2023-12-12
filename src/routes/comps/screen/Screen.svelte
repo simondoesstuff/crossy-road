@@ -6,6 +6,7 @@
     import {fly} from 'svelte/transition';
     import {swipe} from 'svelte-gestures';
     import * as inputManager from "$lib/webGL/input";
+    import * as deathSubtitleManager from "$lib/deathSubtitlesManager";
 
     let score = scoreStore.get();
     scoreStore.listen((v) => score = v);
@@ -15,6 +16,7 @@
     let canvas: HTMLCanvasElement;
     onMount(async () => {
         await glManager.init(canvas);
+        await deathSubtitleManager.init();
     });
 
     let t0 = 0;
