@@ -6,6 +6,7 @@
     import {fly} from 'svelte/transition';
     import {swipe} from 'svelte-gestures';
     import * as inputManager from "$lib/webGL/input";
+    import * as deathSubtitleManager from "$lib/deathSubtitlesManager";
 
     let score = scoreStore.get();
     scoreStore.listen((v) => score = v);
@@ -15,6 +16,7 @@
     let canvas: HTMLCanvasElement;
     onMount(async () => {
         await glManager.init(canvas);
+        await deathSubtitleManager.init();
     });
 
     let t0 = 0;
@@ -34,7 +36,7 @@
 </h1>
 
 <!-- GameOver/Dead screen let's player respawn -->
-{#if !alive}
+{#if !!alive}
     <div class="absolute w-full h-full center"
          in:fly={{ delay: 1350, duration: 500, y: -300}}
          out:fly={{ duration: 300, y: -300}}
