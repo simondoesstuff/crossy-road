@@ -9,7 +9,7 @@ todo currently cars are looping instead of being spawned in for the sake of effi
 
 const carSize = 1.6;
 const config = {
-    minGap: .8,
+    minGap: 1,
     maxGap: 12,
     minVelocity: .8,
     maxVelocity: 5,
