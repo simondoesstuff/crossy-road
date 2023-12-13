@@ -50,25 +50,25 @@ position to the current one to define the jump/squish. This has the nice effect 
 that result in an abnormal jump are still smooth.
 
 In the codebase, I use a listener pattern a lot. Some variables are wrapped in a Store class
-that allows other classes to listen for changes to the variable. This is made it easy to
+that allows other classes to listen for changes to the variable. This made it easy to
 highly decouple the codebase and add new features. I also had an issue where
 the UI needed to access lots of Stores in random places and the UI initialized immediately, but
 the WebGL system initialized slowly.
 - My solution: I made a "Front Store" that the UI could access. Once
 the WebGL system initialized, the Front Store would automatically listen to the real Store and act
-like a pipe.
-- This has the added benefit of allowing information from the internal, game state to be slightly
-modified before it reaches the UI.
+like a pipe. This has the added benefit of allowing information from the internal, game state to be slightly
+modified as it goes through the pipe before it reaches the UI.
 - I also use this pattern to allow my WebGL manager to trigger events throughout the system
 for when each frame is drawn, initialization, time between frames, etc.
 
 Additionally:
 - I used ChatGPT to generate silly death messages. I shuffled them, but stored the order so that
-the same score produces the same message so that they double as achievements.
-- It has mobile support; it will detect swipes and taps and translates them into the corresponding
+the same score produces the same message so that they double as achievements. As of 12/12/2023, they
+go up to score ~2000.
+- It has mobile support; it will detect swipes and taps and translate them into the corresponding
 keyboard inputs.
 - Everything is procedurally generated.
-- I track hit-boxes that I transform by reusing the MV matrix and do my own
+- I track hit-boxes and transform them by reusing the MV matrix to do my own
 collision detection.
 
 # Total Dependencies
